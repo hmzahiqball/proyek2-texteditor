@@ -1,8 +1,13 @@
 #ifndef RECOVERY_H
 #define RECOVERY_H
 
-void checkRecovery();
-void writeRecovery(char *text);
+// Cek recovery file saat startup, muat isi ke buffer jika ada
+void checkRecovery(char *text);
+
+// Tulis isi buffer ke recovery file (autosave / saat crash)
+void writeRecovery(const char *text);
+
+// Hapus recovery file (dipanggil saat exit normal)
 void clearRecovery();
 
 #endif
