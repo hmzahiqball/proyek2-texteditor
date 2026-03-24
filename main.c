@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "recovery.h"
 #include "render.h"
+#include "buffer.h"
 
 #define MAX_TEXT 1000
 
@@ -14,7 +15,7 @@ char text[MAX_TEXT] = "";
 // Handler untuk interupsi (Ctrl+C atau kill)
 void handle_signal(int sig) {
     printf("\n[!] Program diinterupsi. Menyimpan recovery...\n");
-    writeRecovery(text);
+    writeRecovery();
     printf("[!] Recovery tersimpan. Program keluar.\n");
     fflush(stdout);
     exit(1);
@@ -36,6 +37,8 @@ int main() {
         "2. R. Nesya Raham Velda",
         "3. Tania Dwi Pangesti"
     };
+
+    initBuffer(); // 2. Inisialisasi buffer Array 2D saat aplikasi mulai
 
     // Cek data recovery saat startup
     checkRecovery(text);
@@ -66,6 +69,12 @@ int main() {
         else if (strcmp(command, "./edit") == 0) {
             printf("\n--- MODE EDIT (Ketik 'exit' untuk simpan & kembali, Ctrl+C untuk crash) ---\n");
             printf("Isi saat ini:\n%s\n", text);
+
+            // Menampilkan isi text_buffer 2D dengan looping
+            int i;
+            for(i = 0; i < total_lines; i++) {
+                printf("%s\n", text_buffer[i]);
+            }
             
             while (1) {
                 printf("> ");
@@ -80,13 +89,12 @@ int main() {
                 if (strlen(input) == 0) continue;
 
                 // Cek overflow buffer
-                if (strlen(text) + strlen(input) + 2 < MAX_TEXT) {
-                    strcat(text, input);
-                    strcat(text, "\n");
-                    writeRecovery(text); // Autosave setiap baris
-                    printf("[autosave] Tersimpan.\n");
+                if (total_lines < MAX_ROW) {
+                    appendLine(input);
+                    writeRecovery(); // Autosave setiap kali ada baris baru
+                    printf("[autosave] Baris tersimpan di index %d.\n", total_lines - 1);
                 } else {
-                    printf("[!] Buffer penuh!\n");
+                    printf("[!] Buffer baris penuh (Maksimal %d baris)!\n", MAX_ROW);
                     break;
                 }
             }
