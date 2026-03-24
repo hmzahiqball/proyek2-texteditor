@@ -9,9 +9,6 @@
 
 #define MAX_TEXT 1000
 
-// Global variable untuk buffer teks
-char text[MAX_TEXT] = "";
-
 // Handler untuk interupsi (Ctrl+C atau kill)
 void handle_signal(int sig) {
     printf("\n[!] Program diinterupsi. Menyimpan recovery...\n");
@@ -41,11 +38,11 @@ int main() {
     initBuffer(); // 2. Inisialisasi buffer Array 2D saat aplikasi mulai
 
     // Cek data recovery saat startup
-    checkRecovery(text);
+    checkRecovery();
 
     system("cls"); // Bersihkan layar saat mulai
     printf("===== Saw<git> | Text Editor Gabungan =====\n");
-    if (strlen(text) > 0) {
+    if (total_lines > 0) {
         printf("[!] Berhasil memulihkan data dari sesi sebelumnya.\n");
     }
 
@@ -68,7 +65,6 @@ int main() {
         }
         else if (strcmp(command, "./edit") == 0) {
             printf("\n--- MODE EDIT (Ketik 'exit' untuk simpan & kembali, Ctrl+C untuk crash) ---\n");
-            printf("Isi saat ini:\n%s\n", text);
 
             // Menampilkan isi text_buffer 2D dengan looping
             int i;

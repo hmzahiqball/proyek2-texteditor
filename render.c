@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "render.h"
 
-void renderScreen(char buffer[10][100], int rows) {
+void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
     // Membersihkan layar dan kembali ke posisi atas (0,0)
     printf("\033[H\033[2J"); 
 
