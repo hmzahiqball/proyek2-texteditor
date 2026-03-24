@@ -20,7 +20,7 @@ void handle_signal(int sig) {
 
 int main() {
     char command[50];
-    char input[100];
+    char input[MAX_COL];
     bool running = true;
 
     // Pasang "jaring pengaman" signal dari Branch A
@@ -28,14 +28,14 @@ int main() {
     signal(SIGTERM, handle_signal);
 
     // Array Dummy untuk fitur render dari Branch B
-    char dummyFile[10][100] = {
-        "Saw<git> Anggota",
-        "1. Putra Surya Pratama",
-        "2. R. Nesya Raham Velda",
-        "3. Tania Dwi Pangesti"
-    };
+    // char dummyFile[10][100] = {
+    //     "Saw<git> Anggota",
+    //     "1. Putra Surya Pratama",
+    //     "2. R. Nesya Raham Velda",
+    //     "3. Tania Dwi Pangesti"
+    // };
 
-    initBuffer(); // 2. Inisialisasi buffer Array 2D saat aplikasi mulai
+    initBuffer(); // Inisialisasi buffer Array 2D saat aplikasi mulai
 
     // Cek data recovery saat startup
     checkRecovery();
@@ -56,10 +56,10 @@ int main() {
 
         if (strcmp(command, "./i") == 0) {
             printf("\n[INFO] Text Editor Console - Tim Saw<git>.\n");
-            printf("Fitur: Autosave, Signal Recovery, & Renderer.\n");
+            printf("Fitur: Buffer 2D Array, Autosave, Signal Recovery, & Renderer.\n");
         } 
         else if (strcmp(command, "./file") == 0) {
-            renderScreen(dummyFile, 4); 
+            renderScreen(text_buffer, total_lines); 
             printf("\n(Tekan Enter untuk kembali)\n");
             getchar();
         }

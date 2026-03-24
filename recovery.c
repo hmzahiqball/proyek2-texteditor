@@ -1,52 +1,54 @@
 #include <stdio.h>
 #include <string.h>
 #include "recovery.h"
+#include "buffer.h"
 
 #define RECOVERY_FILE "recovery.tmp"
 
 // checkRecovery - Mengecek apakah ada file recovery saat startup.
 // Jika ada, isi file dimuat ke dalam buffer text.
-void checkRecovery(char *text) {
+void checkRecovery() {
     FILE *fp = fopen(RECOVERY_FILE, "r");
-
     if (fp == NULL) {
         printf("Recovery tidak ditemukan.\n");
         return;
     }
 
-    int ch;
-    int i = 0;
-
-    while ((ch = fgetc(fp)) != EOF && i < 999) {
-        text[i++] = (char)ch;
+    char line[MAX_COL];
+    clearBuffer(); // Pastikan buffer bersih sebelum meload dari file
+    
+    // Load ke Array 2D
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        // Hapus karakter newline bawaan fgets agar rapi di array kita
+        line[strcspn(line, "\n")] = 0; 
+        appendLine(line);
     }
-    text[i] = '\0';
 
     fclose(fp);
 
-    if (i > 0) {
-        printf("Recovery ditemukan, data dimuat.\n");
+    if (total_lines > 0) {
+        printf("Recovery ditemukan, %d baris data dimuat.\n", total_lines);
     } else {
         printf("Recovery file kosong.\n");
     }
 }
 
-// writeRecovery - Menulis isi buffer ke file recovery.
-// Dipanggil setiap ada perubahan (autosave) dan saat crash.
-void writeRecovery(const char *text) {
+void writeRecovery() {
     FILE *fp = fopen(RECOVERY_FILE, "w");
-
     if (fp == NULL) {
         printf("Gagal menulis recovery.\n");
         return;
     }
 
-    fprintf(fp, "%s", text);
+    // Tulis isi Array 2D kembali ke file session.tmp
+    int i;
+    for (i = 0; i < total_lines; i++) {
+        fprintf(fp, "%s\n", text_buffer[i]);
+    }
+    
     fclose(fp);
 }
 
-// clearRecovery - Menghapus file recovery.
-// Dipanggil saat program keluar secara normal.
 void clearRecovery() {
     remove(RECOVERY_FILE);
 }
