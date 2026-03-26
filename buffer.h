@@ -30,4 +30,7 @@ void insert_char(char c);
 // Delete Karakter (Backspace)
 void delete_char();
 
+// Insert Newline (Enter)
+void insert_newline();
+
 #endif

@@ -119,6 +119,39 @@ void delete_char() {
     limitCursorBounds();
 }
 
+void insert_newline() {
+    // Pastikan masih ada ruang untuk baris baru
+    if (total_lines >= MAX_ROW) {
+        return;
+    }
+
+    // Jika buffer benar-benar kosong dan user menekan Enter, 
+    // kita anggap ada 1 baris eksisting yang akan dipecah menjadi 2.
+    if (total_lines == 0) {
+        total_lines = 1;
+    }
+
+    int i;
+    // Geser semua baris di bawah kursor turun 1 tingkat (Shift Down)
+    // Kita mulai dari index paling bawah (total_lines) ditarik mundur ke baris kursor
+    for (i = total_lines; i > cursor_row; i--) {
+        strcpy(text_buffer[i], text_buffer[i - 1]);
+    }
+
+    // Pindahkan sisa teks di sebelah kanan kursor ke baris baru (baris di bawahnya)
+    strcpy(text_buffer[cursor_row + 1], &text_buffer[cursor_row][cursor_col]);
+
+    // Potong baris saat ini tepat di posisi kursor dengan null terminator
+    text_buffer[cursor_row][cursor_col] = '\0';
+
+    // Update status kursor dan total baris
+    total_lines++;
+    cursor_row++;
+    cursor_col = 0; // Kursor selalu kembali ke ujung kiri pada baris baru
+
+    limitCursorBounds();
+}
+
 void clearBuffer() {
     initBuffer();
 }
