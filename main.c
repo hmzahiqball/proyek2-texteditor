@@ -64,36 +64,63 @@ int main() {
             getchar();
         }
         else if (strcmp(command, "./edit") == 0) {
-            printf("\n--- MODE EDIT (Ketik 'exit' untuk simpan & kembali, Ctrl+C untuk crash) ---\n");
+            printf("\n--- MODE EDIT ---\n");
+            printf("Petunjuk: Ketik karakter untuk insert, Enter untuk baris baru.\n");
+            printf("Akhiri sesi edit dengan mengetik '~' lalu tekan Enter.\n");
+            printf("----------------------------------------------------------\n");
+
+            // Tampilkan kondisi teks terakhir sebelum mulai mengetik
+            renderScreen(text_buffer, total_lines);
+            
+            int c;
+            // Membaca input per karakter hingga user mengetik '~'
+            while ((c = getchar()) != '~') {
+                
+                if (c == '\n') {
+                    insert_newline();
+                    writeRecovery(); // Autosave setiap kali ada perubahan
+                } 
+                // ASCII 127 adalah Backspace di Linux/Mac, 8 adalah Backspace di Windows
+                else if (c == 127 || c == 8) { 
+                    delete_char();
+                    writeRecovery();
+                } 
+                else {
+                    insert_char(c);
+                    writeRecovery();
+                }
+            }
+            getchar(); 
+            printf("\n[!] Keluar dari Mode Edit.\n");
 
             // Menampilkan isi text_buffer 2D dengan looping
-            int i;
-            for(i = 0; i < total_lines; i++) {
-                printf("%s\n", text_buffer[i]);
-            }
+            // int i;
+            // for(i = 0; i < total_lines; i++) {
+            //     printf("%s\n", text_buffer[i]);
+            // }
             
-            while (1) {
-                printf("> ");
-                fgets(input, sizeof(input), stdin);
-                input[strcspn(input, "\n")] = 0;
+            // while (1) {
+            //     printf("> ");
+            //     fgets(input, sizeof(input), stdin);
+            //     input[strcspn(input, "\n")] = 0;
 
-                if (strcmp(input, "exit") == 0) {
-                    printf("Kembali ke menu utama.\n");
-                    break;
-                }
+            //     if (strcmp(input, "exit") == 0) {
+            //         printf("Kembali ke menu utama.\n");
+            //         break;
+            //     }
 
-                if (strlen(input) == 0) continue;
+            //     if (strlen(input) == 0) continue;
 
-                // Cek overflow buffer
-                if (total_lines < MAX_ROW) {
-                    appendLine(input);
-                    writeRecovery(); // Autosave setiap kali ada baris baru
-                    printf("[autosave] Baris tersimpan di index %d.\n", total_lines - 1);
-                } else {
-                    printf("[!] Buffer baris penuh (Maksimal %d baris)!\n", MAX_ROW);
-                    break;
-                }
-            }
+            //     // Cek overflow buffer
+            //     if (total_lines < MAX_ROW) {
+            //         appendLine(input);
+            //         writeRecovery(); // Autosave setiap kali ada baris baru
+            //         printf("[autosave] Baris tersimpan di index %d.\n", total_lines - 1);
+            //     } else {
+            //         printf("[!] Buffer baris penuh (Maksimal %d baris)!\n", MAX_ROW);
+            //         break;
+            //     }
+            // }
         }
         else if (strcmp(command, "./cls") == 0) {
             system("cls");
