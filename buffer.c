@@ -101,16 +101,6 @@ void insert_newline() {
     limitCursorBounds();
 }
 
-void move_left() {
-    if (cursor_col > 0) {
-        cursor_col--;
-    } 
-    else if (cursor_row > 0) {
-        cursor_row--;
-        cursor_col = strlen(text_buffer[cursor_row]);
-    }
-}
-
 void clearBuffer() {
     initBuffer();
 }
