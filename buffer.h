@@ -24,4 +24,10 @@ void clearBuffer();
 // Fungsi untuk memastikan cursor tidak keluar dari batas buffer
 void limitCursorBounds();
 
+// Menyisipkan karakter tunggal pada posisi kursor
+void insert_char(char c);
+
+// Delete Karakter (Backspace)
+void delete_char();
+
 #endif
