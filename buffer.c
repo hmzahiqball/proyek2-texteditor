@@ -152,6 +152,57 @@ void insert_newline() {
     limitCursorBounds();
 }
 
+void move_left() {
+    // Jika masih di tengah baris, cukup geser ke kiri
+    if (cursor_col > 0) {
+        cursor_col--;
+    } 
+    // Jika di awal baris, tapi BUKAN di baris pertama, naik ke ujung baris sebelumnya
+    else if (cursor_row > 0) {
+        cursor_row--;
+        cursor_col = strlen(text_buffer[cursor_row]); // Lompat ke akhir string baris atasnya
+    }
+}
+
+void move_right() {
+    int len = strlen(text_buffer[cursor_row]);
+    
+    // Jika masih ada karakter di sebelah kanan, geser kursor ke kanan
+    if (cursor_col < len) {
+        cursor_col++;
+    } 
+    // Jika sudah di ujung baris, dan BUKAN di baris paling bawah, turun ke awal baris berikutnya
+    else if (cursor_row < total_lines - 1) {
+        cursor_row++;
+        cursor_col = 0;
+    }
+}
+
+void move_up() {
+    // Pastikan tidak kebablasan melewati baris paling atas
+    if (cursor_row > 0) {
+        cursor_row--;
+        
+        // Sesuaikan cursor_col jika baris baru lebih pendek dari baris sebelumnya
+        int len = strlen(text_buffer[cursor_row]);
+        if (cursor_col > len) {
+            cursor_col = len;
+        }
+    }
+}
+
+void move_down() {
+    // Pastikan tidak kebablasan melewati baris paling bawah yang memiliki teks
+    if (cursor_row < total_lines - 1) {
+        cursor_row++;
+        
+        int len = strlen(text_buffer[cursor_row]);
+        if (cursor_col > len) {
+            cursor_col = len;
+        }
+    }
+}
+
 void clearBuffer() {
     initBuffer();
 }

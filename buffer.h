@@ -33,4 +33,10 @@ void delete_char();
 // Insert Newline (Enter)
 void insert_newline();
 
+// Navigasi kursor
+void move_left();
+void move_right();
+void move_up();
+void move_down();
+
 #endif
