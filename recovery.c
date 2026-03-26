@@ -2,11 +2,11 @@
 #include <string.h>
 #include "recovery.h"
 #include "buffer.h"
+#include "cursor.h"
 
 #define RECOVERY_FILE "recovery.tmp"
 
-// checkRecovery - Mengecek apakah ada file recovery saat startup.
-// Jika ada, isi file dimuat ke dalam buffer text.
+// Memuat isi file recovery.tmp ke buffer saat startup jika tersedia.
 void checkRecovery() {
     FILE *fp = fopen(RECOVERY_FILE, "r");
     if (fp == NULL) {
@@ -15,16 +15,16 @@ void checkRecovery() {
     }
 
     char line[MAX_COL];
-    clearBuffer(); // Pastikan buffer bersih sebelum meload dari file
-    
-    // Load ke Array 2D
+    clearBuffer(); // Kosongkan buffer sebelum memuat kembali dari file
+
     while (fgets(line, sizeof(line), fp) != NULL) {
-        // Hapus karakter newline bawaan fgets agar rapi di array kita
         line[strcspn(line, "\n")] = 0; 
         appendLine(line);
     }
 
     fclose(fp);
+
+    set_cursor_to_end();
 
     if (total_lines > 0) {
         printf("Recovery ditemukan, %d baris data dimuat.\n", total_lines);
@@ -33,6 +33,23 @@ void checkRecovery() {
     }
 }
 
+// Menyimpan isi buffer ke file teks biasa.
+void saveToFile(const char *filename) {
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL) {
+        printf("Gagal menyimpan ke %s.\n", filename);
+        return;
+    }
+
+    int i;
+    for (i = 0; i < total_lines; i++) {
+        fprintf(fp, "%s\n", text_buffer[i]);
+    }
+    fclose(fp);
+    printf("[INFO] File berhasil disimpan ke %s\n", filename);
+}
+
+// Menyimpan isi buffer saat ini ke file recovery.tmp untuk pemulihan sesi.
 void writeRecovery() {
     FILE *fp = fopen(RECOVERY_FILE, "w");
     if (fp == NULL) {
@@ -47,8 +64,4 @@ void writeRecovery() {
     }
     
     fclose(fp);
-}
-
-void clearRecovery() {
-    remove(RECOVERY_FILE);
 }

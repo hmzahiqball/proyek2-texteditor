@@ -1,23 +1,11 @@
 #include <string.h>
 #include "buffer.h"
+#include "cursor.h"
 
 char text_buffer[MAX_ROW][MAX_COL];
 int total_lines = 0;
 
-// Inisialisasi posisi awal
-int cursor_row = 0;
-int cursor_col = 0;
-
-void limitCursorBounds() {
-    // Cegah kursor keluar dari batas baris (row)
-    if (cursor_row < 0) cursor_row = 0;
-    if (cursor_row >= MAX_ROW) cursor_row = MAX_ROW - 1;
-
-    // Cegah kursor keluar dari batas kolom (col)
-    if (cursor_col < 0) cursor_col = 0;
-    if (cursor_col >= MAX_COL - 1) cursor_col = MAX_COL - 2; // -2 agar ada ruang untuk '\0'
-}
-
+// Mengelola isi buffer teks 2D dan operasi edit dasar.
 void initBuffer() {
     int i;
     for (i = 0; i < MAX_ROW; i++) {
@@ -25,181 +13,101 @@ void initBuffer() {
     }
     total_lines = 0;
 
-    // Reset posisi kursor saat buffer diinisialisasi
+    // Reset posisi awal kursor saat buffer diinisialisasi
     cursor_row = 0;
     cursor_col = 0;
 }
 
 void appendLine(const char *input) {
     if (total_lines < MAX_ROW) {
-        // Menyalin input user ke baris yang tersedia saat ini
         strncpy(text_buffer[total_lines], input, MAX_COL - 1);
-        
-        // Memastikan string diakhiri dengan null terminator (safe practice)
         text_buffer[total_lines][MAX_COL - 1] = '\0';
         total_lines++;
-
-        // (Nantinya appendLine akan diganti dengan fungsi ketik karakter)
-        cursor_row = total_lines;
-        cursor_col = 0;
-        limitCursorBounds();
     }
 }
-void insert_char(char c) {
-    // Dapatkan panjang string di baris saat ini
-    int len = strlen(text_buffer[cursor_row]);
 
-    // Pastikan masih ada ruang di baris ini (MAX_COL - 1 untuk null terminator)
+// Menyisipkan satu karakter di posisi kursor dan menggeser teks di kanannya.
+void insert_char(char c) {
+    int len = strlen(text_buffer[cursor_row]);
     if (len < MAX_COL - 1) {
-        
-        // Geser karakter ke kanan (Shift Right)
         int i;
         for (i = len; i >= cursor_col; i--) {
             text_buffer[cursor_row][i + 1] = text_buffer[cursor_row][i];
         }
 
-        // Sisipkan karakter baru di posisi kursor
         text_buffer[cursor_row][cursor_col] = c;
 
         cursor_col++;
 
-        // Update total_lines jika kita mengetik di baris yang benar-benar baru
         if (cursor_row >= total_lines) {
             total_lines = cursor_row + 1;
         }
-
-        // 7. Jaring pengaman batas kursor
         limitCursorBounds();
     }
 }
 
+// Menghapus karakter sebelum kursor, atau menggabungkan dua baris jika di awal baris.
 void delete_char() {
-    // Jika kursor tidak berada di awal baris
     if (cursor_col > 0) {
         int len = strlen(text_buffer[cursor_row]);
         int i;
-        
-        // Geser karakter ke kiri untuk menimpa karakter sebelum kursor
-        // Loop ini juga akan menggeser null terminator ('\0') di akhir string
         for (i = cursor_col; i <= len; i++) {
             text_buffer[cursor_row][i - 1] = text_buffer[cursor_row][i];
         }
-        
-        // Mundurkan kursor
         cursor_col--;
     } 
-    // Jika kursor di awal baris, tapi bukan baris paling atas
     else if (cursor_row > 0) {
         int prev_len = strlen(text_buffer[cursor_row - 1]);
         int curr_len = strlen(text_buffer[cursor_row]);
 
-        // Pastikan baris sebelumnya memiliki ruang yang cukup untuk digabung
         if (prev_len + curr_len < MAX_COL - 1) {
-            
-            // Salin isi baris saat ini ke akhir baris sebelumnya
             strcat(text_buffer[cursor_row - 1], text_buffer[cursor_row]);
-            
-            // Geser semua baris di bawahnya naik satu tingkat (Shift Up)
             int i;
             for (i = cursor_row; i < total_lines - 1; i++) {
                 strcpy(text_buffer[i], text_buffer[i + 1]);
             }
-            
-            // Bersihkan sisa baris paling bawah setelah digeser
             text_buffer[total_lines - 1][0] = '\0';
-            
-            // Update total lines dan posisi kursor
             total_lines--;
             cursor_row--;
-            cursor_col = prev_len; // Kursor berada di titik sambung
+            cursor_col = prev_len;
         }
     }
-    
-    // Pastikan kursor tetap aman
     limitCursorBounds();
 }
 
+// Menyisipkan baris baru di bawah kursor dan memindahkan sisa teks ke baris berikutnya.
 void insert_newline() {
-    // Pastikan masih ada ruang untuk baris baru
     if (total_lines >= MAX_ROW) {
         return;
     }
 
-    // Jika buffer benar-benar kosong dan user menekan Enter, 
-    // kita anggap ada 1 baris eksisting yang akan dipecah menjadi 2.
     if (total_lines == 0) {
         total_lines = 1;
     }
 
     int i;
-    // Geser semua baris di bawah kursor turun 1 tingkat (Shift Down)
-    // Kita mulai dari index paling bawah (total_lines) ditarik mundur ke baris kursor
     for (i = total_lines; i > cursor_row; i--) {
         strcpy(text_buffer[i], text_buffer[i - 1]);
     }
 
-    // Pindahkan sisa teks di sebelah kanan kursor ke baris baru (baris di bawahnya)
     strcpy(text_buffer[cursor_row + 1], &text_buffer[cursor_row][cursor_col]);
 
-    // Potong baris saat ini tepat di posisi kursor dengan null terminator
     text_buffer[cursor_row][cursor_col] = '\0';
 
-    // Update status kursor dan total baris
     total_lines++;
     cursor_row++;
-    cursor_col = 0; // Kursor selalu kembali ke ujung kiri pada baris baru
+    cursor_col = 0;
 
     limitCursorBounds();
 }
 
 void move_left() {
-    // Jika masih di tengah baris, cukup geser ke kiri
     if (cursor_col > 0) {
         cursor_col--;
     } 
-    // Jika di awal baris, tapi BUKAN di baris pertama, naik ke ujung baris sebelumnya
     else if (cursor_row > 0) {
         cursor_row--;
-        cursor_col = strlen(text_buffer[cursor_row]); // Lompat ke akhir string baris atasnya
-    }
-}
-
-void move_right() {
-    int len = strlen(text_buffer[cursor_row]);
-    
-    // Jika masih ada karakter di sebelah kanan, geser kursor ke kanan
-    if (cursor_col < len) {
-        cursor_col++;
-    } 
-    // Jika sudah di ujung baris, dan BUKAN di baris paling bawah, turun ke awal baris berikutnya
-    else if (cursor_row < total_lines - 1) {
-        cursor_row++;
-        cursor_col = 0;
-    }
-}
-
-void move_up() {
-    // Pastikan tidak kebablasan melewati baris paling atas
-    if (cursor_row > 0) {
-        cursor_row--;
-        
-        // Sesuaikan cursor_col jika baris baru lebih pendek dari baris sebelumnya
-        int len = strlen(text_buffer[cursor_row]);
-        if (cursor_col > len) {
-            cursor_col = len;
-        }
-    }
-}
-
-void move_down() {
-    // Pastikan tidak kebablasan melewati baris paling bawah yang memiliki teks
-    if (cursor_row < total_lines - 1) {
-        cursor_row++;
-        
-        int len = strlen(text_buffer[cursor_row]);
-        if (cursor_col > len) {
-            cursor_col = len;
-        }
+        cursor_col = strlen(text_buffer[cursor_row]);
     }
 }
 

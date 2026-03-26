@@ -8,10 +8,6 @@
 extern char text_buffer[MAX_ROW][MAX_COL];
 extern int total_lines;
 
-// State Kursor
-extern int cursor_row;
-extern int cursor_col;
-
 // Fungsi untuk inisialisasi buffer kosong
 void initBuffer();
 
@@ -21,9 +17,6 @@ void appendLine(const char *input);
 // Menghapus seluruh isi buffer
 void clearBuffer();
 
-// Fungsi untuk memastikan cursor tidak keluar dari batas buffer
-void limitCursorBounds();
-
 // Menyisipkan karakter tunggal pada posisi kursor
 void insert_char(char c);
 
@@ -32,11 +25,5 @@ void delete_char();
 
 // Insert Newline (Enter)
 void insert_newline();
-
-// Navigasi kursor
-void move_left();
-void move_right();
-void move_up();
-void move_down();
 
 #endif

@@ -3,13 +3,15 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <conio.h>
 #include "recovery.h"
 #include "render.h"
 #include "buffer.h"
+#include "cursor.h"
 
 #define MAX_TEXT 1000
 
-// Handler untuk interupsi (Ctrl+C atau kill)
+// Menangani interupsi (Ctrl+C atau kill) dengan menyimpan data recovery lebih dulu.
 void handle_signal(int sig) {
     printf("\n[!] Program diinterupsi. Menyimpan recovery...\n");
     writeRecovery();
@@ -20,24 +22,16 @@ void handle_signal(int sig) {
 
 int main() {
     char command[50];
-    char input[MAX_COL];
     bool running = true;
 
-    // Pasang "jaring pengaman" signal dari Branch A
+    // Pasang handler signal agar data disimpan ketika program diinterupsi.
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
-    // Array Dummy untuk fitur render dari Branch B
-    // char dummyFile[10][100] = {
-    //     "Saw<git> Anggota",
-    //     "1. Putra Surya Pratama",
-    //     "2. R. Nesya Raham Velda",
-    //     "3. Tania Dwi Pangesti"
-    // };
+    // Inisialisasi buffer teks saat aplikasi mulai.
+    initBuffer();
 
-    initBuffer(); // Inisialisasi buffer Array 2D saat aplikasi mulai
-
-    // Cek data recovery saat startup
+    // Cek dan muat data recovery jika ada.
     checkRecovery();
 
     system("cls"); // Bersihkan layar saat mulai
@@ -47,10 +41,9 @@ int main() {
     }
 
     while (running) {
-        printf("\nKetik: ./i (info), ./file (render), ./edit (ketik), ./cls (bersih), ./q (keluar)\n");
+        printf("\nKetik: ./i (info), ./file (render), ./edit (ketik), ./save (simpan), ./cls (bersih), ./q (keluar)\n");
         printf("sawgit> ");
         
-        // Menggunakan scanf untuk perintah menu
         scanf("%s", command);
         getchar(); // Membersihkan newline dari buffer stdin
 
@@ -69,65 +62,59 @@ int main() {
             printf("Akhiri sesi edit dengan mengetik '~' lalu tekan Enter.\n");
             printf("----------------------------------------------------------\n");
 
-            // Tampilkan kondisi teks terakhir sebelum mulai mengetik
             renderScreen(text_buffer, total_lines);
-            
-            int c;
-            // Membaca input per karakter hingga user mengetik '~'
-            while ((c = getchar()) != '~') {
+            set_cursor_to_end();
+            // Loop utama mode edit: baca tombol dan ubah isi buffer.
+            while (1) {
+                renderScreen(text_buffer, total_lines);
                 
-                if (c == '\n') {
-                    insert_newline();
-                    writeRecovery(); // Autosave setiap kali ada perubahan
+                int c = _getch();
+
+                if (c == 27) { 
+                    system("cls"); // Bersihkan layar editor saat kembali ke menu
+                    break;
                 } 
-                // ASCII 127 adalah Backspace di Linux/Mac, 8 adalah Backspace di Windows
-                else if (c == 127 || c == 8) { 
+                // Di Windows, tombol panah mengirim dua kode; kode pertama adalah 224.
+                else if (c == 224) { 
+                    c = _getch();
+                    if (c == 72) move_up();
+                    else if (c == 80) move_down();
+                    else if (c == 75) move_left();
+                    else if (c == 77) move_right();
+                } 
+                // ASCII 8 adalah Backspace di lingkungan Windows.
+                else if (c == 8) { 
                     delete_char();
                     writeRecovery();
                 } 
-                else {
-                    insert_char(c);
+                // ASCII 13 adalah tombol Enter dari _getch().
+                else if (c == 13) { 
+                    insert_newline();
+                    writeRecovery();
+                } 
+                // Tombol karakter biasa (huruf, angka, spasi, dll.).
+                else { 
+                    insert_char((char)c);
                     writeRecovery();
                 }
             }
             getchar(); 
             printf("\n[!] Keluar dari Mode Edit.\n");
-
-            // Menampilkan isi text_buffer 2D dengan looping
-            // int i;
-            // for(i = 0; i < total_lines; i++) {
-            //     printf("%s\n", text_buffer[i]);
-            // }
-            
-            // while (1) {
-            //     printf("> ");
-            //     fgets(input, sizeof(input), stdin);
-            //     input[strcspn(input, "\n")] = 0;
-
-            //     if (strcmp(input, "exit") == 0) {
-            //         printf("Kembali ke menu utama.\n");
-            //         break;
-            //     }
-
-            //     if (strlen(input) == 0) continue;
-
-            //     // Cek overflow buffer
-            //     if (total_lines < MAX_ROW) {
-            //         appendLine(input);
-            //         writeRecovery(); // Autosave setiap kali ada baris baru
-            //         printf("[autosave] Baris tersimpan di index %d.\n", total_lines - 1);
-            //     } else {
-            //         printf("[!] Buffer baris penuh (Maksimal %d baris)!\n", MAX_ROW);
-            //         break;
-            //     }
-            // }
         }
+
+        else if (strcmp(command, "./save") == 0) {
+            char filename[100];
+            printf("Masukkan nama file (contoh: output.txt): ");
+            scanf("%s", filename);
+            getchar(); // Membersihkan newline bawaan scanf
+            
+            saveToFile(filename);
+        }
+
         else if (strcmp(command, "./cls") == 0) {
             system("cls");
         }
         else if (strcmp(command, "./q") == 0) {
-            // Keluar normal: hapus recovery karena data dianggap sudah selesai
-            clearRecovery();
             printf("Keluar dari program... Sampai jumpa!\n");
             running = false;
         }

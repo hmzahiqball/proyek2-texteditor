@@ -9,7 +9,6 @@
 void checkRecovery();
 void writeRecovery();
 
-// Hapus recovery file (dipanggil saat exit normal)
-void clearRecovery();
+void saveToFile(const char *filename);
 
 #endif
