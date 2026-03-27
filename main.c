@@ -105,10 +105,20 @@ int main() {
 
         else if (strcmp(command, "./save") == 0) {
             char filename[100];
-            printf("Masukkan nama file (contoh: output.txt): ");
-            scanf("%s", filename);
-            getchar(); // Membersihkan newline bawaan scanf
-            
+
+            while (1) {
+                printf("Masukkan nama file (contoh: output.txt): ");
+                fgets(filename, sizeof(filename), stdin);
+
+                filename[strcspn(filename, "\n")] = 0;
+
+                if (strlen(filename) == 0) {
+                    printf("[ERROR] Nama file tidak boleh kosong! Silakan coba lagi.\n");
+                } else {
+                    break; // keluar dari loop kalau valid
+                }
+            }
+
             saveToFile(filename);
         }
 
