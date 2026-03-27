@@ -41,7 +41,7 @@ Fitur utama yang diimplementasikan dalam program ini:
 - **Update File** – Mengedit isi teks dalam file  
 - **Save File** – Menyimpan isi array ke file  
 - **Save As** – Menyimpan isi teks ke file baru  
-- **Auto Recovery** – Menyimpan perubahan ke file sementara agar data tidak hilang  
+- **Auto Recovery** – Menyimpan perubahan ke file sementara (recovery.tmp) secara otomatis setiap ada perubahan. Data akan dipulihkan otomatis saat program dibuka kembali setelah crash.
 
 ---
 
@@ -189,6 +189,26 @@ Keluar dari program... Sampai jumpa!
 ```
 Screenshot:
 ![Tampilan Menu](img/screenshot_exit.png) 
+
+## Cara Kerja Recovery
+
+Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
+
+### Alur Recovery:
+1. Setiap kali user mengetik lalu data otomatis disimpan ke `recovery.tmp`.
+2. Jika program crash (Ctrl+C / mati mendadak), maka `recovery.tmp` tetap ada.
+3. Saat program dibuka kembali maka data dipulihkan otomatis dari `recovery.tmp`.
+4. Jika user keluar normal (`./q`) maka `recovery.tmp` dihapus otomatis.
+
+### File Recovery:
+1. `recovery.tmp` berfungsi sebagai file sementara untuk autosave.
+2. `recovery.c` berfungsi sebagai modul yang mengelola recovery.
+3. `recovery.h`  berfungsi sebagai header file modul recovery.
+
+### Fungsi Recovery:
+1. `checkRecovery()` berfungsi untuk cek dan muat data recovery saat startup.
+2. `writeRecovery()` berfungsi untuk menyimpan buffer ke recovery.tmp.
+3. `clearRecovery()` berfungsi untuk menghapus recovery.tmp saat exit normal.
 
 ---
 
