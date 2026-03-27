@@ -8,6 +8,7 @@
 #include "render.h"
 #include "buffer.h"
 #include "cursor.h"
+#include "file_io.h"
 
 #define MAX_TEXT 1000
 
@@ -59,7 +60,7 @@ int main() {
         else if (strcmp(command, "./edit") == 0) {
             printf("\n--- MODE EDIT ---\n");
             printf("Petunjuk: Ketik karakter untuk insert, Enter untuk baris baru.\n");
-            printf("Akhiri sesi edit dengan mengetik '~' lalu tekan Enter.\n");
+            printf("Akhiri sesi edit dengan mengetik 'Esc' lalu tekan Enter.\n");
             printf("----------------------------------------------------------\n");
 
             renderScreen(text_buffer, total_lines);
