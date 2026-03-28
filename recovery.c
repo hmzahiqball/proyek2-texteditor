@@ -33,22 +33,6 @@ void checkRecovery() {
     }
 }
 
-// Menyimpan isi buffer ke file teks biasa.
-void saveToFile(const char *filename) {
-    FILE *fp = fopen(filename, "w");
-    if (fp == NULL) {
-        printf("Gagal menyimpan ke %s.\n", filename);
-        return;
-    }
-
-    int i;
-    for (i = 0; i < total_lines; i++) {
-        fprintf(fp, "%s\n", text_buffer[i]);
-    }
-    fclose(fp);
-    printf("[INFO] File berhasil disimpan ke %s\n", filename);
-}
-
 // Menyimpan isi buffer saat ini ke file recovery.tmp untuk pemulihan sesi.
 void writeRecovery() {
     FILE *fp = fopen(RECOVERY_FILE, "w");

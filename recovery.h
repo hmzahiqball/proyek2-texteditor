@@ -9,6 +9,4 @@
 void checkRecovery();
 void writeRecovery();
 
-void saveToFile(const char *filename);
-
 #endif
