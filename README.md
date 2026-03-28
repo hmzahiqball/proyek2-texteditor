@@ -190,6 +190,28 @@ Keluar dari program... Sampai jumpa!
 Screenshot:
 ![Tampilan Menu](img/screenshot_exit.png) 
 
+### 6. Perintah ./save (Simpan File)
+Menyimpan isi teks ke file:
+```
+Masukkan nama file (contoh: output.txt): 
+```
+Cara pakai:
+- Ketik `./save` di menu utama
+- Masukkan nama file yang diinginkan
+- Nama file boleh dua kata (contoh: `catatan harian`)
+- Nama file tidak boleh kosong — program akan minta input ulang
+
+Contoh saat nama kosong:
+```
+[ERROR] Nama file tidak boleh kosong! Silakan coba lagi.
+Masukkan nama file (contoh: output.txt):
+```
+
+Contoh berhasil:
+```
+[INFO] File berhasil disimpan ke output.txt
+```
+
 ## Cara Kerja Recovery
 
 Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
