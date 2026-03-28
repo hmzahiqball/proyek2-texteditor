@@ -5,3 +5,7 @@
 *.exe
 *.txt
 *.tmp
+recovery.tmp
+*.o
+dua kata
+test
