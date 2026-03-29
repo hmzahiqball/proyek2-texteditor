@@ -49,3 +49,8 @@ void writeRecovery() {
     
     fclose(fp);
 }
+
+// Menghapus file recovery saat exit normal
+void clearRecovery() {
+    remove(RECOVERY_FILE);
+}

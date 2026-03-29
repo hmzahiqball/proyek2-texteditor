@@ -1,4 +1,5 @@
 #include <conio.h>
+#include <stdlib.h>
 #include "input.h"
 #include "buffer.h"
 #include "cursor.h"
