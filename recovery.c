@@ -11,19 +11,19 @@ void checkRecovery() {
     FILE *fp = fopen(RECOVERY_FILE, "r");
     if (fp == NULL) {
         printf("Recovery tidak ditemukan.\n");
+        writeRecovery();  //agar file recovery dibuat untuk sesi berikutnya
         return;
     }
 
     char line[MAX_COL];
-    clearBuffer(); // Kosongkan buffer sebelum memuat kembali dari file
+    clearBuffer();
 
     while (fgets(line, sizeof(line), fp) != NULL) {
-        line[strcspn(line, "\n")] = 0; 
+        line[strcspn(line, "\n")] = 0;
         appendLine(line);
     }
 
     fclose(fp);
-
     set_cursor_to_end();
 
     if (total_lines > 0) {
@@ -31,6 +31,8 @@ void checkRecovery() {
     } else {
         printf("Recovery file kosong.\n");
     }
+
+    writeRecovery();  // agar file recovery diperbarui dengan data yang baru dimuat
 }
 
 // Menyimpan isi buffer saat ini ke file recovery.tmp untuk pemulihan sesi.
