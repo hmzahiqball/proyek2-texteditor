@@ -6,11 +6,15 @@
 
 // Menggambar ulang isi buffer ke layar dan menampilkan posisi kursor.
 void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
-    printf("\033[H\033[2J"); 
+    system("cls"); // Pakai ini agar lebih stabil di Windows dibanding kode ANSI
 
-    if (rows == 0) {
-        printf("NULL\n");
-    } else {
+    if (rows == 0) 
+	{
+        // Jangan cetak NULL, biarkan kosong atau cetak baris kosong
+        printf("\n"); 
+    } 
+	else 
+	{
         int i, j;
         for (i = 0; i < rows; i++) {
             if (i == cursor_row) {
