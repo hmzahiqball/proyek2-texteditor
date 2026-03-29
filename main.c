@@ -10,6 +10,7 @@
 #include "cursor.h"
 #include "file_io.h"
 #include "input.h"
+#include "command.h"
 
 // Menangani interupsi (Ctrl+C atau kill) dengan menyimpan data recovery lebih dulu.
 void handle_signal(int sig) {

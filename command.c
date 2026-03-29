@@ -5,7 +5,9 @@
 #include "input.h"    
 #include "file_io.h"  
 #include "buffer.h"   
-#include "cursor.h"   
+#include "cursor.h" 
+#include "recovery.h"
+#include "render.h"  
 
 void executeCommand(char *command) {
     // Menampilkan informasi program
