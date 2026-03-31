@@ -1,11 +1,23 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#ifndef INPUT_H
+#define INPUT_H
+
 /**
- * Fungsi utama untuk menangani input user saat berada dalam Mode Edit.
- * Fungsi ini akan mengambil alih perulangan (loop) dari main.c untuk 
- * memproses karakter, navigasi kursor, dan tombol khusus lainnya.
+ * handleMenuInput:
+ * Menangani input angka 1-5 di layar utama.
+ * Fungsi ini dipanggil di dalam loop main.c.
+ */
+void handleMenuInput();
+
+/**
+ * handleEditInput:
+ * Menangani input karakter, tombol panah, dan shortcut
+ * saat user berada di dalam mode editor (setelah Open/Create).
  */
 void handleEditInput();
+
+#endif
 
 #endif

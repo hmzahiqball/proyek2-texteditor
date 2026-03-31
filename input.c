@@ -1,10 +1,73 @@
+#include <stdio.h>
 #include <conio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "input.h"
 #include "buffer.h"
 #include "cursor.h"
 #include "render.h"
+#include "file_io.h"
 #include "recovery.h"
+
+
+void handleMenuInput() {
+    int pilihan;
+    // Validasi agar jika user input huruf, program tidak looping error
+    if (scanf("%d", &pilihan) != 1) {
+        while (getchar() != '\n'); 
+        return;
+    }
+    getchar(); // Membersihkan newline dari buffer stdin
+
+    switch (pilihan) {
+        case 1: // Open File
+            {
+                char filename[100];
+                printf("Masukkan nama file: ");
+                fgets(filename, sizeof(filename), stdin);
+                filename[strcspn(filename, "\n")] = 0;
+                
+                openFile(filename); // Memuat file ke buffer
+                handleEditInput();  // Langsung masuk ke mode pengetikan
+            }
+            break;
+
+        case 2: // Create File
+            clearBuffer();  // Reset isi teks
+            initCursor();   // Reset posisi kursor ke (0,0)
+            handleEditInput();
+            break;
+
+        case 3: // Info (Pengganti ./i)
+            printf("\n[INFO] Text Editor Console - Tim Saw<git>.\n");
+            printf("Fitur: Buffer 2D Array, Autosave, Signal Recovery, & Renderer.\n");
+            printf("\nTekan Enter untuk kembali...");
+            getchar();
+            break;
+
+        case 4: // Help (Pengganti ./help)
+            system("cls");
+            printf("--- PANDUAN PENGGUNA ---\n");
+            printf("Navigasi : Tombol Panah\n");
+            printf("Simpan   : (Fitur Ctrl+S segera hadir)\n");
+            printf("Kembali  : Tekan ESC saat di mode edit\n");
+            printf("\nTekan Enter untuk kembali...");
+            getchar();
+            break;
+
+        case 5: // Quit (Pengganti ./q)
+            clearRecovery(); // Hapus file tmp karena keluar normal
+            printf("Keluar dari program. Sampai jumpa!\n");
+            exit(0);
+            break;
+
+        default:
+            printf("\n[!] Pilihan 1-5 saja ya, Tan. wkwk\n");
+            _getch(); // Tunggu sebentar agar pesan terbaca
+            break;
+    }
+}
+
 
 void handleEditInput()
 {

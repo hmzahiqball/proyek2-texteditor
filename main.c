@@ -22,10 +22,7 @@ void handle_signal(int sig) {
 }
 
 int main() {
-    char command[50];
-    bool running = true;
-
-    // Pasang handler signal agar data disimpan ketika program diinterupsi.
+     // Pasang handler signal agar data disimpan ketika program diinterupsi.
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
@@ -35,21 +32,10 @@ int main() {
     // Cek dan muat data recovery jika ada.
     checkRecovery();
 
-    system("cls"); // Bersihkan layar saat mulai
-    printf("===== Saw<git> | Text Editor Gabungan =====\n");
-    if (total_lines > 0) 
-	{
-        printf("[!] Berhasil memulihkan data dari sesi sebelumnya.\n");
-    }
-
     while (1) 
 	{
-        printf("\nKetik: ./i (info), ./file (render), ./edit (ketik), ./open (buka), ./save (simpan), ./cls (bersih), ./q (keluar)\n");
-        printf("sawgit> ");
-        
-        scanf("%s", command);
-        getchar(); // Membersihkan newline dari buffer stdin
-        executeCommand(command);
+        renderMainMenu();  // Tampilan menu dari render.c
+        handleMenuInput(); // Logika input dari input.c
     }
 
     return 0;

@@ -5,6 +5,24 @@
 #include "buffer.h"
 #include "cursor.h"
 
+
+void renderMainMenu() {
+    system("cls"); // Pastikan layar bersih
+    printf("==================================================\n");
+    printf("=========== Saw<git> | Text Editor ===============\n");
+    printf("1. Open file\n");
+    printf("2. Create File\n");
+    printf("3. Info\n");
+    printf("4. Help\n");
+    printf("5. Quit\n");
+    printf("==================================================\n");
+    
+    if (total_lines > 0) {
+        printf("[!] Status: Buffer terisi (%d baris).\n", total_lines);
+    }
+    printf("\nSawgit> ");
+}
+
 // Menggambar ulang isi buffer ke layar dan menampilkan posisi kursor.
 void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
     system("cls"); // Pakai ini agar lebih stabil di Windows dibanding kode ANSI
