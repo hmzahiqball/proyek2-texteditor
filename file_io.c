@@ -3,52 +3,68 @@
 #include <conio.h>
 #include "file_io.h"
 #include "buffer.h"
+#include "cursor.h"
 
-//Deklarasi variabel global untuk status modifikasi dan nama file saat ini
+// Deklarasi variabel global untuk status modifikasi dan nama file saat ini
+// Variabel ini akan dipinjam (extern) oleh Tania di render.c
 int is_modified = 0; 
 char current_filename[256] = "Untitled";
 
-// Menyimpan isi buffer ke file .txt (buffer ke disk)
+// Fungsi untuk menyimpan isi buffer ke dalam file di disk
 void saveToFile(const char *filename) {
     FILE *fp = fopen(filename, "w");
     if (fp == NULL) {
-        printf("Gagal menyimpan ke %s.\n", filename);
+        printf("\n[ERROR] Gagal menyimpan ke %s.\n", filename);
         return;
     }
 
-    for (int i = 0; i < total_lines; i++) {
+    // Menulis baris demi baris dari buffer ke file
+    int i;
+    for (i = 0; i < total_lines; i++) {
         fprintf(fp, "%s\n", text_buffer[i]);
     }
 
     fclose(fp);
-    is_modified = 0; // Setelah di-save, status kembali jadi 'Saved'
+    
+    // Update status setelah berhasil simpan
+    is_modified = 0; 
     strcpy(current_filename, filename);
     
-    printf("[INFO] File berhasil disimpan ke %s\n", filename);
+    printf("\n[INFO] File berhasil disimpan ke %s\n", filename);
 }
 
-// Membuka file dari disk dan memuat isinya ke buffer (disk ke buffer)
-// Di file_io.c karena terkait langsung dengan operasi file, bukan logika input atau rendering.
+// Fungsi untuk membuka file dari disk dan memuatnya ke buffer RAM
 void openFile(const char *filename) {
     FILE *fp = fopen(filename, "r");
     
     if (fp == NULL) {
-        printf("\n[ERROR] File '%s' tidak ditemukan.\n", filename);
+        printf("\n[ERROR] File '%s' tidak ditemukan atau tidak bisa dibuka.\n", filename);
         return;
     }
 
+    // 1. Bersihkan buffer lama sebelum memuat data baru
     clearBuffer();
-    strcpy(current_filename, filename); // Catat nama filenya
+    
+    // 2. Simpan nama file yang sedang dibuka
+    strcpy(current_filename, filename); 
 
+    // 3. Baca isi file baris demi baris
     char line[MAX_COL];
     while (fgets(line, sizeof(line), fp) != NULL) {
+        // Bug Fix: Hapus karakter newline agar tampilan editor tidak berantakan
         line[strcspn(line, "\r\n")] = 0;
         appendLine(line);
     }
 
     fclose(fp);
-    is_modified = 0; // Baru dibuka, jadi belum ada perubahan (Saved)
+
+    // 4. Update status (Baru buka = belum ada perubahan)
+    is_modified = 0; 
+
+    // 5. Tambahan : Pindahkan kursor ke akhir dokumen
+    set_cursor_to_end();
     
-    printf("\n[INFO] %s terbuka. Status: buffer terisi [%d Baris]\n", filename, total_lines);
+    printf("\n[INFO] %s berhasil dibuka. %d baris dimuat.\n", filename, total_lines);
+    printf("Tekan sembarang tombol untuk lanjut...");
     getch();
 }
