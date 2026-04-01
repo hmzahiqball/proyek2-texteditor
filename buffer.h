@@ -26,4 +26,6 @@ void delete_char();
 // Insert Newline (Enter)
 void insert_newline();
 
+int getLineLength(int row);
+
 #endif

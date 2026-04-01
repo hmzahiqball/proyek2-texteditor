@@ -13,20 +13,32 @@ void initCursor() {
 
 void limitCursorBounds() {
     if (cursor_row < 0) cursor_row = 0;
-    if (cursor_row >= MAX_ROW) cursor_row = MAX_ROW - 1;
+
+    if (total_lines == 0) {
+        cursor_row = 0;
+        cursor_col = 0;
+        return;
+    }
+
+    if (cursor_row >= total_lines) {
+        cursor_row = total_lines - 1;
+    }
+
+    int len = getLineLength(cursor_row);
 
     if (cursor_col < 0) cursor_col = 0;
-    if (cursor_col >= MAX_COL - 1) cursor_col = MAX_COL - 2;
+    if (cursor_col > len) cursor_col = len;
 }
 
 void set_cursor_to_end() {
     if (total_lines > 0) {
         cursor_row = total_lines - 1;
-        cursor_col = strlen(text_buffer[cursor_row]);
+        cursor_col = getLineLength(cursor_row);
     } else {
         cursor_row = 0;
         cursor_col = 0;
     }
+
     limitCursorBounds();
 }
 

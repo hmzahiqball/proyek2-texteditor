@@ -5,25 +5,29 @@
 char text_buffer[MAX_ROW][MAX_COL];
 int total_lines = 0;
 
-// Mengelola isi buffer teks 2D dan operasi edit dasar.
 void initBuffer() {
     int i;
     for (i = 0; i < MAX_ROW; i++) {
         text_buffer[i][0] = '\0';
     }
     total_lines = 0;
+}
 
-    // Reset posisi awal kursor saat buffer diinisialisasi
-    cursor_row = 0;
-    cursor_col = 0;
+void clearBuffer() {
+    int i;
+    for (i = 0; i < MAX_ROW; i++) {
+        text_buffer[i][0] = '\0';
+    }
+    total_lines = 0;
 }
 
 void appendLine(const char *input) {
-    if (total_lines < MAX_ROW) {
-        strncpy(text_buffer[total_lines], input, MAX_COL - 1);
-        text_buffer[total_lines][MAX_COL - 1] = '\0';
-        total_lines++;
-    }
+    if (total_lines >= MAX_ROW) return;
+
+    strncpy(text_buffer[total_lines], input, MAX_COL - 1);
+    text_buffer[total_lines][MAX_COL - 1] = '\0';
+
+    total_lines++;
 }
 
 // Menyisipkan satu karakter di posisi kursor dan menggeser teks di kanannya.
@@ -101,6 +105,8 @@ void insert_newline() {
     limitCursorBounds();
 }
 
-void clearBuffer() {
-    initBuffer();
+// helper
+int getLineLength(int row) {
+    if (row < 0 || row >= total_lines) return 0;
+    return strlen(text_buffer[row]);
 }
