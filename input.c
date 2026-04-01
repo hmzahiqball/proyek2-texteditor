@@ -9,111 +9,125 @@
 #include "file_io.h"
 #include "recovery.h"
 
-
 void handleMenuInput() {
-    int pilihan;
-    // Validasi agar jika user input huruf, program tidak looping error
-    if (scanf("%d", &pilihan) != 1) {
-        while (getchar() != '\n'); 
+    int c = _getch(); 
+
+    if (c == 17) { // Ctrl+Q
+        printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
+        int confirm = _getch();
+        if (confirm == 'y' || confirm == 'Y') {
+            clearRecovery();
+            exit(0);
+        }
         return;
     }
-    getchar(); // Membersihkan newline dari buffer stdin
-
-    switch (pilihan) {
-        case 1: // Open File
-            {
-                char filename[100];
-                printf("Masukkan nama file: ");
-                fgets(filename, sizeof(filename), stdin);
+	
+	// Shortcut Ctrl+G di Menu Utama
+    if (c == 7) {
+        renderHelpScreen(); //
+        _getch();
+        return;
+    }
+	
+    switch (c - '0') {
+        case 1: { // OPEN FILE
+            char filename[100];
+            printf("\nMasukkan nama file yang ingin dibuka: ");
+            if (fgets(filename, sizeof(filename), stdin) != NULL) {
                 filename[strcspn(filename, "\n")] = 0;
-                
-                openFile(filename); // Memuat file ke buffer
-                handleEditInput();  // Langsung masuk ke mode pengetikan
+                openFile(filename);
+                handleEditInput(filename);
             }
             break;
-
-        case 2: // Create File
-            clearBuffer();  // Reset isi teks
-            initCursor();   // Reset posisi kursor ke (0,0)
-            handleEditInput();
+        }
+        case 2: // CREATE FILE
+            clearBuffer();
+            initCursor();
+            handleEditInput(""); // String kosong menandakan file baru
             break;
-
-        case 3: // Info (Pengganti ./i)
-            printf("\n[INFO] Text Editor Console - Tim Saw<git>.\n");
-            printf("Fitur: Buffer 2D Array, Autosave, Signal Recovery, & Renderer.\n");
-            printf("\nTekan Enter untuk kembali...");
-            getchar();
+        case 3: // Info
+            printf("\n[INFO] Saw<git> Text Editor v1.0\n");
+            printf("Tania (UI), Putra (Logic), Neysa (IO/Recovery)\n");
+            printf("\nTekan sembarang tombol...");
+            _getch();
             break;
-
-        case 4: // Help (Pengganti ./help)
+        case 4: // Help
             system("cls");
-            printf("--- PANDUAN PENGGUNA ---\n");
-            printf("Navigasi : Tombol Panah\n");
-            printf("Simpan   : (Fitur Ctrl+S segera hadir)\n");
-            printf("Kembali  : Tekan ESC saat di mode edit\n");
-            printf("\nTekan Enter untuk kembali...");
-            getchar();
+            renderHelpScreen(); 
+            _getch();
             break;
-
-        case 5: // Quit (Pengganti ./q)
-            clearRecovery(); // Hapus file tmp karena keluar normal
-            printf("Keluar dari program. Sampai jumpa!\n");
+        case 5: // Quit manual
+            clearRecovery();
             exit(0);
-            break;
-
-        default:
-            printf("\n[!] Pilihan 1-5 saja ya, Tan. wkwk\n");
-            _getch(); // Tunggu sebentar agar pesan terbaca
             break;
     }
 }
 
+    
+    
+void handleEditInput(char *filename) {
+    if (total_lines == 0) total_lines = 1;
+    char current_file[100];
+    strcpy(current_file, filename);
 
-void handleEditInput()
-{
-	// Loop utama mode edit: baca tombol dan ubah isi buffer.
-	
-	if (total_lines == 0) 
-	{
-        total_lines = 1; // Beri ruang satu baris untuk mulai mengetik
-    }
-    
-    
-    while (1) 
-	{
+    while (1) {
         renderScreen(text_buffer, total_lines);
-        
         int c = _getch();
 
-        if (c == 27) { 
-            system("cls"); // Bersihkan layar editor saat kembali ke menu
-            break;
-        } 
-        // Di Windows, tombol panah mengirim dua kode; kode pertama adalah 224.
-        else if (c == 224) { 
+        if (c == 17) { // Ctrl+Q
+            printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
+            if (_getch() == 'y') {
+                clearRecovery();
+                exit(0); 
+            }
+        }
+        else if (c == 19) { // Ctrl+S
+            if (strlen(current_file) > 0) {
+                saveToFile(current_file);
+                printf("\n[OK] Tersimpan ke %s", current_file);
+            } else {
+                printf("\n[SAVE AS] Masukkan nama file baru: ");
+                if (fgets(current_file, sizeof(current_file), stdin) != NULL) {
+                    current_file[strcspn(current_file, "\n")] = 0;
+                    if (strlen(current_file) > 0) saveToFile(current_file);
+                }
+            }
+            printf("\nTekan sembarang tombol...");
+            _getch();
+        }
+        else if (c == 27) 
+		{
+			break;	
+		} 
+		else if (c == 7) 
+		{ // Shortcut Ctrl+G
+		    renderHelpScreen(); // Panggil dari render.c
+		    _getch();           // Tunggu input di input.c
+		}
+        else if (c == 224) 
+		{ // Arrow Keys
             c = _getch();
             if (c == 72) move_up();
             else if (c == 80) move_down();
             else if (c == 75) move_left();
             else if (c == 77) move_right();
         } 
-        // ASCII 8 adalah Backspace di lingkungan Windows.
-        else if (c == 8) { 
-            delete_char();
-            writeRecovery();
-        } 
-        // ASCII 13 adalah tombol Enter dari _getch().
-        else if (c == 13) { 
-            insert_newline();
-            writeRecovery();
-        } 
-        // Tombol karakter biasa (huruf, angka, spasi, dll.).
-        else { 
-            insert_char((char)c);
-            writeRecovery();
-        }
+        else if (c == 8) 
+		{ 
+			delete_char(); 
+			writeRecovery(); 
+		} 
+        else if (c == 13) 
+		{ 
+			insert_newline(); 
+			writeRecovery(); 
+		} 
+        else if (c >= 32 && c <= 126) 
+		{ 
+			insert_char((char)c); 
+			writeRecovery(); 
+		}
     }
-
 }
 
 

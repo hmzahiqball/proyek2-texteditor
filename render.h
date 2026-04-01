@@ -5,6 +5,8 @@
 
 void renderMainMenu();
 
+void renderHelpScreen();
+
 void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows);
 
 #endif

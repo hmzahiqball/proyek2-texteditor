@@ -23,6 +23,21 @@ void renderMainMenu() {
     printf("\nSawgit> ");
 }
 
+
+void renderHelpScreen() {
+    system("cls"); //
+    printf("==================================================\n");
+    printf("           BANTUAN SHORTCUT SAW<GIT>              \n");
+    printf("==================================================\n");
+    printf(" Ctrl + G : Buka menu bantuan ini                 \n");
+    printf(" Ctrl + S : Simpan (Mode Open) / Save As (Create) \n");
+    printf(" Ctrl + Q : Keluar dari Program                   \n");
+    printf(" ESC      : Kembali ke Menu Utama                 \n");
+    printf(" Panah    : Navigasi Kursor                       \n");
+    printf("==================================================\n");
+    printf("\nTekan sembarang tombol untuk kembali...");
+}
+
 // Menggambar ulang isi buffer ke layar dan menampilkan posisi kursor.
 void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
     system("cls"); // Pakai ini agar lebih stabil di Windows dibanding kode ANSI
