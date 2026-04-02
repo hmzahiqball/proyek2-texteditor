@@ -5,6 +5,9 @@
 #include "buffer.h"
 #include "cursor.h"
 
+extern int is_modified;
+extern char current_filename[256];
+extern int total_lines;
 
 void renderMainMenu() {
     system("cls"); // Pastikan layar bersih
@@ -67,5 +70,14 @@ void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
             }
         }
     }
-}
 
+    // Tampilkan status file dan posisi kursor di bagian bawah layar
+    printf("\n--------------------------------------------------\n");
+    if (is_modified == 1) {
+        printf("[Unsaved Changes] | File: %s | Baris: %d\n", current_filename, total_lines);
+    } else {
+        printf("[Saved] | File: %s | Baris: %d\n", current_filename, total_lines);
+    }
+    printf("--------------------------------------------------\n");
+    printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | ESC: Menu\n", cursor_row + 1, cursor_col + 1);
+}

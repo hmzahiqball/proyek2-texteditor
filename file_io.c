@@ -6,7 +6,7 @@
 #include "cursor.h"
 
 // Deklarasi variabel global untuk status modifikasi dan nama file saat ini
-// Variabel ini akan dipinjam (extern) oleh Tania di render.c
+// Variabel ini akan dipinjam (extern) di render.c
 int is_modified = 0; 
 char current_filename[256] = "Untitled";
 
