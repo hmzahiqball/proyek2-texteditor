@@ -15,52 +15,34 @@ void handleEditInput(char *filename) {
     char current_file[100];
     strcpy(current_file, filename);
 
-    while (1) 
-	{
+    while (1) {
         renderScreen(text_buffer, total_lines);
         int c = _getch();
-        
-        // ESC: Kembali ke Menu Utama
-        if (c == 27) { 
-            break; 
-        }
 
-        // Ctrl + Q: Keluar Program Sepenuhnya
-        else if (c == 17) { 
+        // --- 1. KELOMPOK NAVIGASI & KELUAR (TIDAK RUBAH DATA) ---
+        // --- 1. KELOMPOK NAVIGASI & KELUAR (TIDAK RUBAH DATA) ---
+		if (c == 15) { // Ctrl+O (Langsung Buka File Baru)
+		    char next_file[100];
+		    printf("\n[OPEN] Buka file lain? Data saat ini akan hilang (y/n): ");
+		    if (_getch() == 'y') {
+		        printf("\nMasukkan nama file yang ingin dibuka: ");
+		        if (fgets(next_file, sizeof(next_file), stdin) != NULL) {
+		            next_file[strcspn(next_file, "\n")] = 0; // Bersihkan newline
+		            
+		            // Proses memuat file baru
+		            openFile(next_file); 
+		            strcpy(current_file, next_file); // Update nama file aktif
+		            
+		            // Recovery tetap aman karena openFile biasanya memicu reset kursor
+		        }
+		    }
+		}
+		else if (c == 27) { // ESC (Hanya ini yang sekarang kembali ke menu)
+		    break; 
+		}
+        else if (c == 17) { // Ctrl+Q (Quit)
             printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
             if (_getch() == 'y') {
-                clearRecovery(); // Hapus file tmp saat exit normal
-                exit(0); 
-            }
-        }
-        // Ctrl+S
-		else if (c == 19) { 
-            if (strlen(current_file) > 0) 
-			{
-                saveToFile(current_file);
-                printf("\n[OK] Tersimpan ke %s", current_file);
-            } else {
-                printf("\n[SAVE AS] Masukkan nama file baru: ");
-                if (fgets(current_file, sizeof(current_file), stdin) != NULL) 
-				{
-                    current_file[strcspn(current_file, "\n")] = 0;
-                    if (strlen(current_file) > 0) saveToFile(current_file);
-                }
-            }
-            printf("\nTekan sembarang tombol...");
-            _getch();
-        }
-        // Ctrl+G
-		else if (c == 7) { 
-            renderHelpScreen();
-            _getch();
-        }
-		// Ctrl+Q
-        else if (c == 17) 
-		{ 
-            printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
-            if (_getch() == 'y') 
-			{
                 clearRecovery();
                 exit(0); 
             }
@@ -71,21 +53,58 @@ void handleEditInput(char *filename) {
             else if (c == 80) move_down();
             else if (c == 75) move_left();
             else if (c == 77) move_right();
-        } 
-        else if (c == 8) { 
+        }
+
+        // --- 2. KELOMPOK SHORTCUT INFORMASI (TIDAK RUBAH DATA) ---
+        else if (c == 7) { // Ctrl+G (Help)
+            renderHelpScreen();
+            _getch();
+        }
+        else if (c == 9) { // Ctrl+I (Info)
+            printf("\n[INFO] Saw<git> Text Editor v1.0\n");
+            printf("Tania (UI), Putra (Logic), Neysa (IO/Recovery)\n");
+            printf("\nTekan sembarang tombol...");
+            _getch();
+        }
+
+        // --- 3. KELOMPOK MANAJEMEN FILE (TIDAK RUBAH DATA) ---
+        else if (c == 19) { // Ctrl+S (Save)
+            if (strlen(current_file) > 0) {
+                saveToFile(current_file);
+            } else {
+                printf("\n[SAVE AS] Masukkan nama file baru: ");
+                if (fgets(current_file, sizeof(current_file), stdin) != NULL) {
+                    current_file[strcspn(current_file, "\n")] = 0;
+                    if (strlen(current_file) > 0) saveToFile(current_file);
+                }
+            }
+            printf("\nTekan sembarang tombol...");
+            _getch();
+        }
+        else if (c == 14) { // Ctrl+N (New File/Reset Buffer)
+            printf("\n[NEW] Buat file baru? Data belum tersimpan akan hilang (y/n): ");
+            if (_getch() == 'y') {
+                clearBuffer();
+                initCursor();
+                strcpy(current_file, "");
+                total_lines = 1;
+            }
+        }
+
+        // --- 4. KELOMPOK INPUT TEKS (WAJIB TRIGGER RECOVERY) ---
+        else if (c == 8) { // Backspace
             delete_char(); 
             writeRecovery(); 
         } 
-        else if (c == 13) { 
+        else if (c == 13) { // Enter
             insert_newline(); 
             writeRecovery(); 
         } 
-        else if (c >= 32 && c <= 126) { 
+        else if (c >= 32 && c <= 126) { // Karakter cetak
             insert_char((char)c); 
             writeRecovery(); 
         }
     }
-        
 }
 
 // Fungsi Menu ditaruh di bawah
