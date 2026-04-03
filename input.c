@@ -61,9 +61,7 @@ void handleEditInput(char *filename) {
             _getch();
         }
         else if (c == 9) { // Ctrl+I (Info)
-            printf("\n[INFO] Saw<git> Text Editor v1.0\n");
-            printf("Tania (UI), Putra (Logic), Neysa (IO/Recovery)\n");
-            printf("\nTekan sembarang tombol...");
+            renderInfoScreen();
             _getch();
         }
 
@@ -136,9 +134,7 @@ void handleMenuInput() {
 
     // 3. INFO (Angka 3)
     else if (c == '3' || c == 9) { 
-        printf("\n[INFO] Saw<git> Text Editor v1.0\n");
-        printf("Tania (UI), Putra (Logic), Neysa (IO/Recovery)\n");
-        printf("\nTekan sembarang tombol untuk kembali...");
+        renderInfoScreen();
         _getch();
     }
 
