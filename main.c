@@ -28,8 +28,11 @@ int main() {
     // Inisialisasi buffer teks saat aplikasi mulai.
     initBuffer();
 
-    // Cek dan muat data recovery jika ada.
-    checkRecovery();
+    // Jika checkRecovery menemukan file .tmp dan user setuju restore
+    if (checkRecovery() == 1) { 
+        // Langsung lempar ke editor dengan nama file recovery
+        handleEditInput(current_filename); 
+    }
 
     while (1) 
 	{

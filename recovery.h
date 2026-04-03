@@ -2,7 +2,7 @@
 #define RECOVERY_H
 
 // Cek file recovery saat startup, muat isi ke buffer jika ada
-void checkRecovery();
+int checkRecovery();
 
 // Simpan isi buffer ke file recovery (autosave & crash handler)
 void writeRecovery();

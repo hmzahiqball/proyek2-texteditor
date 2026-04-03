@@ -12,8 +12,8 @@
 // Definisi fungsi Editor ditaruh di atas agar Menu mengenalnya
 void handleEditInput(char *filename) {
     if (total_lines == 0) total_lines = 1;
-    char current_file[100];
-    strcpy(current_file, filename);
+    extern char current_filename[256];
+    strcpy(current_filename, filename);
 
     while (1) {
         renderScreen(text_buffer, total_lines);
@@ -31,7 +31,7 @@ void handleEditInput(char *filename) {
 		            
 		            // Proses memuat file baru
 		            openFile(next_file); 
-		            strcpy(current_file, next_file); // Update nama file aktif
+		            strcpy(current_filename, next_file); // Update nama file aktif
 		            
 		            // Recovery tetap aman karena openFile biasanya memicu reset kursor
 		        }
@@ -69,13 +69,13 @@ void handleEditInput(char *filename) {
 
         // --- 3. KELOMPOK MANAJEMEN FILE (TIDAK RUBAH DATA) ---
         else if (c == 19) { // Ctrl+S (Save)
-            if (strlen(current_file) > 0) {
-                saveToFile(current_file);
+            if (strlen(current_filename) > 0) {
+                saveToFile(current_filename);
             } else {
                 printf("\n[SAVE AS] Masukkan nama file baru: ");
-                if (fgets(current_file, sizeof(current_file), stdin) != NULL) {
-                    current_file[strcspn(current_file, "\n")] = 0;
-                    if (strlen(current_file) > 0) saveToFile(current_file);
+                if (fgets(current_filename, sizeof(current_filename), stdin) != NULL) {
+                    current_filename[strcspn(current_filename, "\n")] = 0;
+                    if (strlen(current_filename) > 0) saveToFile(current_filename);
                 }
             }
             printf("\nTekan sembarang tombol...");
@@ -86,7 +86,7 @@ void handleEditInput(char *filename) {
             if (_getch() == 'y') {
                 clearBuffer();
                 initCursor();
-                strcpy(current_file, "");
+                strcpy(current_filename, "");
                 total_lines = 1;
             }
         }
@@ -94,14 +94,17 @@ void handleEditInput(char *filename) {
         // --- 4. KELOMPOK INPUT TEKS (WAJIB TRIGGER RECOVERY) ---
         else if (c == 8) { // Backspace
             delete_char(); 
+            is_modified = 1; // Tandai buffer sudah diubah
             writeRecovery(); 
         } 
         else if (c == 13) { // Enter
             insert_newline(); 
+            is_modified = 1; // Tandai buffer sudah diubah
             writeRecovery(); 
         } 
         else if (c >= 32 && c <= 126) { // Karakter cetak
             insert_char((char)c); 
+            is_modified = 1; // Tandai buffer sudah diubah
             writeRecovery(); 
         }
     }
@@ -126,6 +129,8 @@ void handleMenuInput() {
     else if (c == '2' || c == 14) { 
         clearBuffer(); // Kosongkan buffer teks
         initCursor();  // Reset posisi kursor ke 0,0
+        strcpy(current_filename, "Untitled"); // Set nama file default
+        is_modified = 0; // Status belum ada perubahan
         handleEditInput(""); // Buka editor dengan nama file kosong
     }
 
