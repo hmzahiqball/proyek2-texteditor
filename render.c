@@ -26,6 +26,20 @@ void renderMainMenu() {
     printf("\nSawgit> ");
 }
 
+void renderInfoScreen() {
+    system("cls");
+    printf("============================================\n");
+    printf("========== INFO APLIKASI SAW<GIT> ==========\n");
+    printf("============================================\n");
+    printf("Versi       : 1.0                           \n");
+    printf("Pengembang  : Tania, Putra, & Neysa         \n");
+    printf("--------------------------------------------\n");
+    printf("Teknis      : Berbasis Console 2D Array     \n");
+    printf("              (Max: %dx%d Character)\n", MAX_ROW, MAX_COL);
+    printf("============================================\n");
+    printf("\nTekan sembarang tombol untuk kembali..."     );
+}
+
 
 void renderHelpScreen() {
     system("cls"); //
