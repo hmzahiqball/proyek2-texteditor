@@ -4,11 +4,12 @@
 #include "file_io.h"
 #include "buffer.h"
 #include "cursor.h"
+#include "recovery.h"
 
 // Deklarasi variabel global untuk status modifikasi dan nama file saat ini
 // Variabel ini akan dipinjam (extern) di render.c
-int is_modified = 0; 
-char current_filename[256] = "Untitled";
+int is_modified = 0; // 0 = tidak ada perubahan, 1 = ada perubahan
+char current_filename[256] = "Untitled"; // Nama file default saat buat baru
 
 // Fungsi untuk menyimpan isi buffer ke dalam file di disk
 void saveToFile(const char *filename) {
@@ -29,7 +30,8 @@ void saveToFile(const char *filename) {
     // Update status setelah berhasil simpan
     is_modified = 0; 
     strcpy(current_filename, filename);
-    
+    clearRecovery(); // Hapus .tmp karena data sudah aman di .txt
+    // Begitu user ketik lagi, writeRecovery() otomatis buat .tmp baru
     printf("\n[INFO] File berhasil disimpan ke %s\n", filename);
 }
 
