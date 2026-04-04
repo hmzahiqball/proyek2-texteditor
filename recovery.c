@@ -6,6 +6,7 @@
 #include "cursor.h"
 
 #define RECOVERY_FILE "recovery.tmp"
+extern char current_filename[256];
 extern int is_modified; // Status modifikasi buffer, dipinjam dari file_io.c
 
 // Memuat isi file recovery.tmp ke buffer saat startup jika tersedia.
@@ -20,8 +21,22 @@ int checkRecovery() {
     char line[MAX_COL];
     clearBuffer();
 
+    // 1. Baca baris pertama untuk mencari tahu nama file aslinya
+    if (fgets(line, sizeof(line), fp) != NULL) {
+        if (strncmp(line, "FILENAME:", 9) == 0) {
+            line[strcspn(line, "\r\n")] = 0; // Bersihkan newline
+            strcpy(current_filename, line + 9); // Ambil nama setelah "FILENAME:"
+        } else {
+            // Jika baris pertama bukan FILENAME (file lama), 
+            // anggap sebagai teks biasa dan masukkan ke buffer
+            line[strcspn(line, "\r\n")] = 0;
+            appendLine(line);
+        }
+    }
+
+    // 2. Baca sisa baris lainnya sebagai isi teks
     while (fgets(line, sizeof(line), fp) != NULL) {
-        line[strcspn(line, "\n")] = 0; // Hapus newline agar tampilan editor tidak berantakan
+        line[strcspn(line, "\r\n")] = 0;
         appendLine(line);
     }
 
@@ -44,10 +59,11 @@ int checkRecovery() {
 void writeRecovery() {
     // PROTEKSI: Jangan tulis kalau buffer kosong (total_lines == 0)
     // Kecuali kalau memang user sengaja mengosongkan semua teks.
-    if (total_lines == 0) return; 
+    if (total_lines == 0) return; // Tidak perlu buat file recovery kalau tidak ada data untuk disimpan
 
     FILE *fp = fopen("recovery_new.tmp", "w"); 
     if (fp == NULL) return;
+    fprintf(fp, "FILENAME:%s\n", current_filename); // Simpan nama file yang sedang dibuka (jika ada)
 
     for (int i = 0; i < total_lines; i++) {
         fprintf(fp, "%s\n", text_buffer[i]);
