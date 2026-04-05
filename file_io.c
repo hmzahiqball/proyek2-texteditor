@@ -5,6 +5,7 @@
 #include "buffer.h"
 #include "cursor.h"
 #include "recovery.h"
+#include "render.h"
 
 // Deklarasi variabel global untuk status modifikasi dan nama file saat ini
 // Variabel ini akan dipinjam (extern) di render.c
@@ -15,24 +16,24 @@ char current_filename[256] = "Untitled"; // Nama file default saat buat baru
 void saveToFile(const char *filename) {
     FILE *fp = fopen(filename, "w");
     if (fp == NULL) {
-        printf("\n[ERROR] Gagal menyimpan ke %s.\n", filename);
+        sprintf(bottom_message, "[ERROR] Gagal menyimpan ke %s", filename);
+        show_message = 1;
         return;
     }
 
-    // Menulis baris demi baris dari buffer ke file
-    int i;
-    for (i = 0; i < total_lines; i++) {
+    for (int i = 0; i < total_lines; i++) {
         fprintf(fp, "%s\n", text_buffer[i]);
     }
 
     fclose(fp);
-    
-    // Update status setelah berhasil simpan
-    is_modified = 0; 
+
+    is_modified = 0;
     strcpy(current_filename, filename);
-    clearRecovery(); // Hapus .tmp karena data sudah aman di .txt
-    // Begitu user ketik lagi, writeRecovery() otomatis buat .tmp baru
-    printf("\n[INFO] File berhasil disimpan ke %s\n", filename);
+    clearRecovery();
+
+    // 🔥 tampilkan info TANPA printf
+    sprintf(bottom_message, "[INFO] File berhasil disimpan ke %s", filename);
+    show_message = 1;
 }
 
 // Fungsi untuk membuka file dari disk dan memuatnya ke buffer RAM

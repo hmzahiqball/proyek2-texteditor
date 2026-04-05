@@ -8,8 +8,13 @@
 extern int is_modified;
 extern char current_filename[256];
 extern int total_lines;
+
 int view_row_offset = 0;
 int view_col_offset = 0;
+
+char bottom_message[256] = "";
+int show_message = 0;
+int input_mode = 0;
 
 void renderMainMenu() {
     system("cls"); // Pastikan layar bersih
@@ -67,6 +72,7 @@ void renderScreen(char *buffer[MAX_ROW], int rows) {
     int start = view_row_offset;
     int end = view_row_offset + SCREEN_HEIGHT;
     if (end > rows) end = rows;
+    int visible_lines = end - start;
 
     int i;
     for (i = start; i < end; i++) {
@@ -86,9 +92,23 @@ void renderScreen(char *buffer[MAX_ROW], int rows) {
     printf("--------------------------------------------------\n");
     printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | ESC: Menu\n", cursor_row + 1, cursor_col + 1);
 
-    // 🔥 pindahin cursor ke posisi asli
+    if (show_message) {
+        printf("\n%s\n", bottom_message);
+    }
+
+    if (input_mode) {
+    // 🔥 posisi message = setelah semua UI
+    int msg_line = visible_lines + 7;
+
+    // ambil panjang teks terakhir (buat posisi kolom)
+    char *last_line = strrchr(bottom_message, '\n');
+    int col = last_line ? strlen(last_line + 1) + 1 : strlen(bottom_message) + 1;
+
+    printf("\033[%d;%dH", msg_line, col);
+} else {
     printf("\033[%d;%dH", 
         cursor_row - view_row_offset + 1, 
         cursor_col + 1
     );
+}
 }

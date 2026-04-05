@@ -90,18 +90,39 @@ void handleEditInput(char *filename) {
         }
 
         // Manajemen File
-        else if (c == 19) { // Ctrl+S: Save
+        else if (c == 19) { // Ctrl+S
             if (strlen(current_filename) > 0 && strcmp(current_filename, "Untitled") != 0) {
                 saveToFile(current_filename);
+
+                sprintf(bottom_message, "[INFO] File berhasil disimpan ke %s", current_filename);
+                show_message = 1;
             } else {
-                printf("\n[SAVE AS] Masukkan nama file baru: ");
-                if (fgets(current_filename, sizeof(current_filename), stdin) != NULL) {
-                    current_filename[strcspn(current_filename, "\n")] = 0;
-                    if (strlen(current_filename) > 0) saveToFile(current_filename);
+                input_mode = 1;
+                // tampilkan SAVE AS di UI
+                strcpy(bottom_message, "[SAVE AS] Masukkan nama file baru: ");
+                show_message = 1;
+                renderScreen(text_buffer, total_lines);
+
+                // input user
+                fgets(current_filename, sizeof(current_filename), stdin);
+                current_filename[strcspn(current_filename, "\n")] = 0;
+
+                input_mode = 0;
+
+                if (strlen(current_filename) > 0) {
+                    saveToFile(current_filename);
+
+                    sprintf(bottom_message, "[INFO] File berhasil disimpan ke %s", current_filename);
+                    show_message = 1;
                 }
             }
-            printf("\nTekan sembarang tombol...");
+
+            // tampilkan message + pause
+            strcat(bottom_message, "\nTekan sembarang tombol...");
+            renderScreen(text_buffer, total_lines);
             _getch();
+
+            show_message = 0; // reset biar hilang
         }
 
         // Manipulasi Teks (Trigger Recovery)

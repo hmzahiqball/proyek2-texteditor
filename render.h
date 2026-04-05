@@ -7,13 +7,14 @@
 
 extern int view_row_offset;
 extern int view_col_offset;
+extern int input_mode;
+
+extern char bottom_message[256];
+extern int show_message;
 
 void renderMainMenu();
-
-void renderInfoScreen();
-
-void renderHelpScreen();
-
 void renderScreen(char *buffer[MAX_ROW], int rows);
+void renderInfoScreen();
+void renderHelpScreen();
 
 #endif
