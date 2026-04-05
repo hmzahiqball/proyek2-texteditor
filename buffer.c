@@ -4,11 +4,13 @@
 
 char text_buffer[MAX_ROW][MAX_COL];
 int total_lines = 0;
+int line_length[MAX_ROW];
 
 void initBuffer() {
     int i;
     for (i = 0; i < MAX_ROW; i++) {
         text_buffer[i][0] = '\0';
+        line_length[i] = 0;
     }
     total_lines = 0;
 }
@@ -17,6 +19,7 @@ void clearBuffer() {
     int i;
     for (i = 0; i < MAX_ROW; i++) {
         text_buffer[i][0] = '\0';
+        line_length[i] = 0;
     }
     total_lines = 0;
 }
@@ -27,12 +30,14 @@ void appendLine(const char *input) {
     strncpy(text_buffer[total_lines], input, MAX_COL - 1);
     text_buffer[total_lines][MAX_COL - 1] = '\0';
 
+    line_length[total_lines] = strlen(text_buffer[total_lines]);
+
     total_lines++;
 }
 
-// Menyisipkan satu karakter di posisi kursor dan menggeser teks di kanannya.
 void insert_char(char c) {
-    int len = strlen(text_buffer[cursor_row]);
+    int len = line_length[cursor_row];
+
     if (len < MAX_COL - 1) {
         int i;
         for (i = len; i >= cursor_col; i--) {
@@ -41,62 +46,73 @@ void insert_char(char c) {
 
         text_buffer[cursor_row][cursor_col] = c;
 
+        line_length[cursor_row]++;
         cursor_col++;
 
         if (cursor_row >= total_lines) {
             total_lines = cursor_row + 1;
         }
+
         limitCursorBounds();
     }
 }
 
-// Menghapus karakter sebelum kursor, atau menggabungkan dua baris jika di awal baris.
 void delete_char() {
     if (cursor_col > 0) {
-        int len = strlen(text_buffer[cursor_row]);
+        int len = line_length[cursor_row];
         int i;
+
         for (i = cursor_col; i <= len; i++) {
             text_buffer[cursor_row][i - 1] = text_buffer[cursor_row][i];
         }
+
+        line_length[cursor_row]--;
         cursor_col--;
     } 
     else if (cursor_row > 0) {
-        int prev_len = strlen(text_buffer[cursor_row - 1]);
-        int curr_len = strlen(text_buffer[cursor_row]);
+        int prev_len = line_length[cursor_row - 1];
+        int curr_len = line_length[cursor_row];
 
         if (prev_len + curr_len < MAX_COL - 1) {
             strcat(text_buffer[cursor_row - 1], text_buffer[cursor_row]);
+
+            line_length[cursor_row - 1] += curr_len;
+
             int i;
             for (i = cursor_row; i < total_lines - 1; i++) {
                 strcpy(text_buffer[i], text_buffer[i + 1]);
+                line_length[i] = line_length[i + 1];
             }
+
             text_buffer[total_lines - 1][0] = '\0';
+            line_length[total_lines - 1] = 0;
+
             total_lines--;
             cursor_row--;
             cursor_col = prev_len;
         }
     }
+
     limitCursorBounds();
 }
 
-// Menyisipkan baris baru di bawah kursor dan memindahkan sisa teks ke baris berikutnya.
 void insert_newline() {
-    if (total_lines >= MAX_ROW) {
-        return;
-    }
+    if (total_lines >= MAX_ROW) return;
 
-    if (total_lines == 0) {
-        total_lines = 1;
-    }
+    if (total_lines == 0) total_lines = 1;
 
     int i;
     for (i = total_lines; i > cursor_row; i--) {
         strcpy(text_buffer[i], text_buffer[i - 1]);
+        line_length[i] = line_length[i - 1];
     }
 
     strcpy(text_buffer[cursor_row + 1], &text_buffer[cursor_row][cursor_col]);
 
+    line_length[cursor_row + 1] = strlen(text_buffer[cursor_row + 1]);
+
     text_buffer[cursor_row][cursor_col] = '\0';
+    line_length[cursor_row] = cursor_col;
 
     total_lines++;
     cursor_row++;
@@ -105,8 +121,7 @@ void insert_newline() {
     limitCursorBounds();
 }
 
-// helper
 int getLineLength(int row) {
     if (row < 0 || row >= total_lines) return 0;
-    return strlen(text_buffer[row]);
+    return line_length[row];
 }

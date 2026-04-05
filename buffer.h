@@ -7,6 +7,7 @@
 // Deklarasi array 2D global sesuai spesifikasi Saw<git>
 extern char text_buffer[MAX_ROW][MAX_COL];
 extern int total_lines;
+extern int line_length[MAX_ROW];
 
 // Fungsi untuk inisialisasi buffer kosong
 void initBuffer();
