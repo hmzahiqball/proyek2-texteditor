@@ -61,7 +61,7 @@ void renderHelpScreen() {
 }
 
 // Menggambar ulang isi buffer ke layar dan menampilkan posisi kursor.
-void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
+void renderScreen(char *buffer[MAX_ROW], int rows) {
     system("cls"); // Pakai ini agar lebih stabil di Windows dibanding kode ANSI
 
     int start = view_row_offset;

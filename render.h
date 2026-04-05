@@ -14,6 +14,6 @@ void renderInfoScreen();
 
 void renderHelpScreen();
 
-void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows);
+void renderScreen(char *buffer[MAX_ROW], int rows);
 
 #endif

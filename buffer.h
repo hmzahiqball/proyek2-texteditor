@@ -5,10 +5,12 @@
 #define MAX_COL 100
 
 // Deklarasi array 2D global sesuai spesifikasi Saw<git>
-extern char text_buffer[MAX_ROW][MAX_COL];
+extern char *text_buffer[MAX_ROW];
 extern int total_lines;
 extern int line_length[MAX_ROW];
+
 int getLineLength(int row);
+
 char getCharAt(int row, int col);
 
 // Fungsi untuk inisialisasi buffer kosong

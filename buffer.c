@@ -1,15 +1,16 @@
 #include <string.h>
+#include <stdlib.h>
 #include "buffer.h"
 #include "cursor.h"
 
-char text_buffer[MAX_ROW][MAX_COL];
+char *text_buffer[MAX_ROW];
 int total_lines = 0;
 int line_length[MAX_ROW];
 
 void initBuffer() {
     int i;
     for (i = 0; i < MAX_ROW; i++) {
-        text_buffer[i][0] = '\0';
+        text_buffer[i] = NULL;
         line_length[i] = 0;
     }
     total_lines = 0;
@@ -18,7 +19,10 @@ void initBuffer() {
 void clearBuffer() {
     int i;
     for (i = 0; i < MAX_ROW; i++) {
-        text_buffer[i][0] = '\0';
+        if (text_buffer[i] != NULL) {
+            free(text_buffer[i]);
+            text_buffer[i] = NULL;
+        }
         line_length[i] = 0;
     }
     total_lines = 0;
@@ -27,74 +31,66 @@ void clearBuffer() {
 void appendLine(const char *input) {
     if (total_lines >= MAX_ROW) return;
 
-    strncpy(text_buffer[total_lines], input, MAX_COL - 1);
-    text_buffer[total_lines][MAX_COL - 1] = '\0';
+    int len = strlen(input);
 
-    line_length[total_lines] = strlen(text_buffer[total_lines]);
+    text_buffer[total_lines] = (char*) malloc(len + 1);
+    strcpy(text_buffer[total_lines], input);
 
+    line_length[total_lines] = len;
     total_lines++;
 }
 
 void insert_char(char c) {
     int len = line_length[cursor_row];
+    char *line = text_buffer[cursor_row];
 
-    if (len < MAX_COL - 1) {
-        memmove(
-            &text_buffer[cursor_row][cursor_col + 1],
-            &text_buffer[cursor_row][cursor_col],
-            len - cursor_col + 1
-        );
-
-        text_buffer[cursor_row][cursor_col] = c;
-
-        line_length[cursor_row]++;
-        cursor_col++;
-
-        if (cursor_row >= total_lines) {
-            total_lines = cursor_row + 1;
-        }
-
-        limitCursorBounds();
+    if (line == NULL) {
+        line = (char*) malloc(1);
+        line[0] = '\0';
+        len = 0;
     }
+
+    // realloc tambah 1 char
+    line = realloc(line, len + 2);
+
+    memmove(
+        &line[cursor_col + 1],
+        &line[cursor_col],
+        len - cursor_col + 1
+    );
+
+    line[cursor_col] = c;
+
+    text_buffer[cursor_row] = line;
+    line_length[cursor_row]++;
+
+    cursor_col++;
+
+    if (cursor_row >= total_lines) {
+        total_lines = cursor_row + 1;
+    }
+
+    limitCursorBounds();
     adjust_viewport();
 }
 
 void delete_char() {
     if (cursor_col > 0) {
         int len = line_length[cursor_row];
-        int i;
+        char *line = text_buffer[cursor_row];
 
         memmove(
-            &text_buffer[cursor_row][cursor_col - 1],
-            &text_buffer[cursor_row][cursor_col],
+            &line[cursor_col - 1],
+            &line[cursor_col],
             len - cursor_col + 1
         );
 
+        line = realloc(line, len); // shrink
+
+        text_buffer[cursor_row] = line;
         line_length[cursor_row]--;
+
         cursor_col--;
-    } 
-    else if (cursor_row > 0) {
-        int prev_len = line_length[cursor_row - 1];
-        int curr_len = line_length[cursor_row];
-
-        if (prev_len + curr_len < MAX_COL - 1) {
-            strcat(text_buffer[cursor_row - 1], text_buffer[cursor_row]);
-
-            line_length[cursor_row - 1] += curr_len;
-
-            int i;
-            for (i = cursor_row; i < total_lines - 1; i++) {
-                strcpy(text_buffer[i], text_buffer[i + 1]);
-                line_length[i] = line_length[i + 1];
-            }
-
-            text_buffer[total_lines - 1][0] = '\0';
-            line_length[total_lines - 1] = 0;
-
-            total_lines--;
-            cursor_row--;
-            cursor_col = prev_len;
-        }
     }
 
     limitCursorBounds();
@@ -104,22 +100,30 @@ void delete_char() {
 void insert_newline() {
     if (total_lines >= MAX_ROW) return;
 
-    if (total_lines == 0) total_lines = 1;
+    char *line = text_buffer[cursor_row];
+    int len = line_length[cursor_row];
 
+    // split line
+    char *new_line = strdup(&line[cursor_col]);
+
+    line[cursor_col] = '\0';
+    line = realloc(line, cursor_col + 1);
+
+    // shift pointer 
     int i;
-    for (i = total_lines; i > cursor_row; i--) {
-        strcpy(text_buffer[i], text_buffer[i - 1]);
+    for (i = total_lines; i > cursor_row + 1; i--) {
+        text_buffer[i] = text_buffer[i - 1];
         line_length[i] = line_length[i - 1];
     }
 
-    strcpy(text_buffer[cursor_row + 1], &text_buffer[cursor_row][cursor_col]);
-
-    line_length[cursor_row + 1] = strlen(text_buffer[cursor_row + 1]);
-
-    text_buffer[cursor_row][cursor_col] = '\0';
+    text_buffer[cursor_row] = line;
     line_length[cursor_row] = cursor_col;
 
+    text_buffer[cursor_row + 1] = new_line;
+    line_length[cursor_row + 1] = strlen(new_line);
+
     total_lines++;
+
     cursor_row++;
     cursor_col = 0;
 
