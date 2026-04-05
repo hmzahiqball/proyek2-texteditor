@@ -62,38 +62,21 @@ void renderHelpScreen() {
 
 // Menggambar ulang isi buffer ke layar dan menampilkan posisi kursor.
 void renderScreen(char *buffer[MAX_ROW], int rows) {
-    system("cls"); // Pakai ini agar lebih stabil di Windows dibanding kode ANSI
+    system("cls");
 
     int start = view_row_offset;
     int end = view_row_offset + SCREEN_HEIGHT;
+    if (end > rows) end = rows;
 
-    if (rows == 0) 
-	{
-        // Jangan cetak NULL, biarkan kosong atau cetak baris kosong
-        printf("\n"); 
-    } 
-	else 
-	{
-        int i, j;
-        for (i = start; i < end; i++) {
-            if (i == cursor_row) {
-                int len = line_length[i];
-                for (j = 0; j <= len; j++) {
-                    if (j == cursor_col) {
-                        printf("|");
-                    }
-                    if (j < len) {
-                        printf("%c", buffer[i][j]);
-                    }
-                }
-                printf("\n");
-            } else {
-                printf("%s\n", buffer[i]); 
-            }
-        }
+    int i;
+    for (i = start; i < end; i++) {
+        if (buffer[i] != NULL)
+            printf("%s\n", buffer[i]);
+        else
+            printf("\n");
     }
 
-    // Tampilkan status file dan posisi kursor di bagian bawah layar
+    // status bar
     printf("\n--------------------------------------------------\n");
     if (is_modified == 1) {
         printf("[Unsaved Changes] | File: %s | Baris: %d\n", current_filename, total_lines);
@@ -102,4 +85,10 @@ void renderScreen(char *buffer[MAX_ROW], int rows) {
     }
     printf("--------------------------------------------------\n");
     printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | ESC: Menu\n", cursor_row + 1, cursor_col + 1);
+
+    // 🔥 pindahin cursor ke posisi asli
+    printf("\033[%d;%dH", 
+        cursor_row - view_row_offset + 1, 
+        cursor_col + 1
+    );
 }
