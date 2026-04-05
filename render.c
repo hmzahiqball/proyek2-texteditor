@@ -8,6 +8,8 @@
 extern int is_modified;
 extern char current_filename[256];
 extern int total_lines;
+int view_row_offset = 0;
+int view_col_offset = 0;
 
 void renderMainMenu() {
     system("cls"); // Pastikan layar bersih
@@ -62,6 +64,9 @@ void renderHelpScreen() {
 void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
     system("cls"); // Pakai ini agar lebih stabil di Windows dibanding kode ANSI
 
+    int start = view_row_offset;
+    int end = view_row_offset + SCREEN_HEIGHT;
+
     if (rows == 0) 
 	{
         // Jangan cetak NULL, biarkan kosong atau cetak baris kosong
@@ -70,9 +75,9 @@ void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
 	else 
 	{
         int i, j;
-        for (i = 0; i < rows; i++) {
+        for (i = start; i < end; i++) {
             if (i == cursor_row) {
-                int len = strlen(buffer[i]);
+                int len = line_length[i];
                 for (j = 0; j <= len; j++) {
                     if (j == cursor_col) {
                         printf("|");

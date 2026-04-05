@@ -56,6 +56,7 @@ void insert_char(char c) {
 
         limitCursorBounds();
     }
+    adjust_viewport();
 }
 
 void delete_char() {
@@ -97,6 +98,7 @@ void delete_char() {
     }
 
     limitCursorBounds();
+    adjust_viewport();
 }
 
 void insert_newline() {
@@ -122,6 +124,7 @@ void insert_newline() {
     cursor_col = 0;
 
     limitCursorBounds();
+    adjust_viewport();
 }
 
 int getLineLength(int row) {
