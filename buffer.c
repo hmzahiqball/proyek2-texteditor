@@ -39,10 +39,11 @@ void insert_char(char c) {
     int len = line_length[cursor_row];
 
     if (len < MAX_COL - 1) {
-        int i;
-        for (i = len; i >= cursor_col; i--) {
-            text_buffer[cursor_row][i + 1] = text_buffer[cursor_row][i];
-        }
+        memmove(
+            &text_buffer[cursor_row][cursor_col + 1],
+            &text_buffer[cursor_row][cursor_col],
+            len - cursor_col + 1
+        );
 
         text_buffer[cursor_row][cursor_col] = c;
 
@@ -62,9 +63,11 @@ void delete_char() {
         int len = line_length[cursor_row];
         int i;
 
-        for (i = cursor_col; i <= len; i++) {
-            text_buffer[cursor_row][i - 1] = text_buffer[cursor_row][i];
-        }
+        memmove(
+            &text_buffer[cursor_row][cursor_col - 1],
+            &text_buffer[cursor_row][cursor_col],
+            len - cursor_col + 1
+        );
 
         line_length[cursor_row]--;
         cursor_col--;
@@ -124,4 +127,10 @@ void insert_newline() {
 int getLineLength(int row) {
     if (row < 0 || row >= total_lines) return 0;
     return line_length[row];
+}
+
+char getCharAt(int row, int col) {
+    if (row < 0 || row >= total_lines) return '\0';
+    if (col < 0 || col >= line_length[row]) return '\0';
+    return text_buffer[row][col];
 }

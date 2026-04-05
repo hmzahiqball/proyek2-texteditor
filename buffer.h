@@ -8,6 +8,8 @@
 extern char text_buffer[MAX_ROW][MAX_COL];
 extern int total_lines;
 extern int line_length[MAX_ROW];
+int getLineLength(int row);
+char getCharAt(int row, int col);
 
 // Fungsi untuk inisialisasi buffer kosong
 void initBuffer();

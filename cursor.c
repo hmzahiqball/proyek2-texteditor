@@ -47,12 +47,12 @@ void move_left() {
         cursor_col--;
     } else if (cursor_row > 0) {
         cursor_row--;
-        cursor_col = strlen(text_buffer[cursor_row]);
+        cursor_col = getLineLength(cursor_row);
     }
 }
 
 void move_right() {
-    int len = strlen(text_buffer[cursor_row]);
+    int len = getLineLength(cursor_row);
 
     if (cursor_col < len) {
         cursor_col++;
@@ -65,7 +65,7 @@ void move_right() {
 void move_up() {
     if (cursor_row > 0) {
         cursor_row--;
-        int len = strlen(text_buffer[cursor_row]);
+        int len = getLineLength(cursor_row);
         if (cursor_col > len) cursor_col = len;
     }
 }
@@ -73,7 +73,7 @@ void move_up() {
 void move_down() {
     if (cursor_row < total_lines - 1) {
         cursor_row++;
-        int len = strlen(text_buffer[cursor_row]);
+        int len = getLineLength(cursor_row);
         if (cursor_col > len) cursor_col = len;
     }
 }
