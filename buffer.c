@@ -3,25 +3,26 @@
 #include "buffer.h"
 #include "cursor.h"
 
-char *text_buffer[MAX_ROW];
+char text_buffer[MAX_ROW][MAX_COL];
 int total_lines = 0;
 int line_length[MAX_ROW];
 
 void initBuffer() {
-    int i;
+    int i, j;
     for (i = 0; i < MAX_ROW; i++) {
-        text_buffer[i] = NULL;
+        for (j = 0; j < MAX_COL; j++) {
+            text_buffer[i][j] = '\0';
+        }
         line_length[i] = 0;
     }
     total_lines = 0;
 }
 
 void clearBuffer() {
-    int i;
+    int i, j;
     for (i = 0; i < MAX_ROW; i++) {
-        if (text_buffer[i] != NULL) {
-            free(text_buffer[i]);
-            text_buffer[i] = NULL;
+        for (j = 0; j < MAX_COL; j++) {
+            text_buffer[i][j] = '\0';
         }
         line_length[i] = 0;
     }
@@ -32,9 +33,10 @@ void appendLine(const char *input) {
     if (total_lines >= MAX_ROW) return;
 
     int len = strlen(input);
+    if (len > MAX_COL - 1) len = MAX_COL - 1; // Batasi panjang
 
-    text_buffer[total_lines] = (char*) malloc(len + 1);
-    strcpy(text_buffer[total_lines], input);
+    strncpy(text_buffer[total_lines], input, len);
+    text_buffer[total_lines][len] = '\0';
 
     line_length[total_lines] = len;
     total_lines++;
@@ -42,26 +44,17 @@ void appendLine(const char *input) {
 
 void insert_char(char c) {
     int len = line_length[cursor_row];
-    char *line = text_buffer[cursor_row];
 
-    if (line == NULL) {
-        line = (char*) malloc(1);
-        line[0] = '\0';
-        len = 0;
-    }
+    if (len >= MAX_COL - 1) return; // Tidak bisa insert jika sudah penuh
 
-    // realloc tambah 1 char
-    line = realloc(line, len + 2);
-
+    // Geser karakter ke kanan mulai dari cursor_col
     memmove(
-        &line[cursor_col + 1],
-        &line[cursor_col],
+        &text_buffer[cursor_row][cursor_col + 1],
+        &text_buffer[cursor_row][cursor_col],
         len - cursor_col + 1
     );
 
-    line[cursor_col] = c;
-
-    text_buffer[cursor_row] = line;
+    text_buffer[cursor_row][cursor_col] = c;
     line_length[cursor_row]++;
 
     cursor_col++;
@@ -77,17 +70,14 @@ void insert_char(char c) {
 void delete_char() {
     if (cursor_col > 0) {
         int len = line_length[cursor_row];
-        char *line = text_buffer[cursor_row];
 
+        // Geser karakter ke kiri mulai dari cursor_col
         memmove(
-            &line[cursor_col - 1],
-            &line[cursor_col],
+            &text_buffer[cursor_row][cursor_col - 1],
+            &text_buffer[cursor_row][cursor_col],
             len - cursor_col + 1
         );
 
-        line = realloc(line, len); // shrink
-
-        text_buffer[cursor_row] = line;
         line_length[cursor_row]--;
 
         cursor_col--;
@@ -100,27 +90,29 @@ void delete_char() {
 void insert_newline() {
     if (total_lines >= MAX_ROW) return;
 
-    char *line = text_buffer[cursor_row];
     int len = line_length[cursor_row];
 
-    // split line
-    char *new_line = strdup(&line[cursor_col]);
+    // Salin bagian setelah cursor ke baris baru
+    int new_line_len = len - cursor_col;
+    if (new_line_len > 0) {
+        memcpy(text_buffer[cursor_row + 1], &text_buffer[cursor_row][cursor_col], new_line_len);
+        text_buffer[cursor_row + 1][new_line_len] = '\0';
+    } else {
+        text_buffer[cursor_row + 1][0] = '\0';
+    }
 
-    line[cursor_col] = '\0';
-    line = realloc(line, cursor_col + 1);
+    // Set akhir baris lama
+    text_buffer[cursor_row][cursor_col] = '\0';
+    line_length[cursor_row] = cursor_col;
 
-    // shift pointer 
+    // Geser baris-baris di bawah
     int i;
     for (i = total_lines; i > cursor_row + 1; i--) {
-        text_buffer[i] = text_buffer[i - 1];
+        memcpy(text_buffer[i], text_buffer[i - 1], MAX_COL);
         line_length[i] = line_length[i - 1];
     }
 
-    text_buffer[cursor_row] = line;
-    line_length[cursor_row] = cursor_col;
-
-    text_buffer[cursor_row + 1] = new_line;
-    line_length[cursor_row + 1] = strlen(new_line);
+    line_length[cursor_row + 1] = new_line_len;
 
     total_lines++;
 

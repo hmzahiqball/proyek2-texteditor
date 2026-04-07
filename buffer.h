@@ -5,7 +5,7 @@
 #define MAX_COL 100
 
 // Deklarasi array 2D global sesuai spesifikasi Saw<git>
-extern char *text_buffer[MAX_ROW];
+extern char text_buffer[MAX_ROW][MAX_COL];
 extern int total_lines;
 extern int line_length[MAX_ROW];
 
