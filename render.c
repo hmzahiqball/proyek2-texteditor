@@ -66,7 +66,7 @@ void renderHelpScreen() {
 }
 
 // Menggambar ulang isi buffer ke layar dan menampilkan posisi kursor.
-void renderScreen(char *buffer[MAX_ROW], int rows) {
+void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
     system("cls");
 
     int start = view_row_offset;
@@ -76,10 +76,7 @@ void renderScreen(char *buffer[MAX_ROW], int rows) {
 
     int i;
     for (i = start; i < end; i++) {
-        if (buffer[i] != NULL)
-            printf("%s\n", buffer[i]);
-        else
-            printf("\n");
+        printf("%s\n", buffer[i]);
     }
 
     // status bar

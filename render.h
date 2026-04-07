@@ -13,7 +13,7 @@ extern char bottom_message[256];
 extern int show_message;
 
 void renderMainMenu();
-void renderScreen(char *buffer[MAX_ROW], int rows);
+void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows);
 void renderInfoScreen();
 void renderHelpScreen();
 
