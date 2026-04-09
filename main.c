@@ -11,7 +11,7 @@
 #include "file_io.h"
 #include "input.h"
 
-// Menangani interupsi (Ctrl+C atau kill) dengan menyimpan data recovery lebih dulu.
+// Menangani interupsi (kill) dengan menyimpan data recovery lebih dulu.
 void handle_signal(int sig) {
     printf("\n[!] Program diinterupsi. Menyimpan recovery...\n");
     writeRecovery();
@@ -22,8 +22,8 @@ void handle_signal(int sig) {
 
 int main() {
      // Pasang handler signal agar data disimpan ketika program diinterupsi.
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
+    signal(SIGINT, handle_signal); // untuk Ctrl+C atau interupsi terminal (Nanti akan diupdate))
+    signal(SIGTERM, handle_signal); // untuk perintah kill dari sistem operasi
 
     // Inisialisasi buffer teks saat aplikasi mulai.
     initBuffer();

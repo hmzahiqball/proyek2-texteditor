@@ -93,134 +93,107 @@ Gunakan salah satu:
 
 ---
 
-# Cara Pakai
-## 1. Compile Program
-Pastikan semua file .c ada di satu folder, lalu compile menggunakan cmd/powershell:
-```bash
-gcc *.c -o texteditor
-```
+## Contoh Penggunaan
 
-## 2. Jalankan Program
-Setelah program berhasil di-compile, jalankan program melalui terminal:
+### 1. Menu Utama
+Saat program dibuka, akan tampil menu utama:
+==================================================
+=========== Saw<git> | Text Editor ===============
 
-```bash
-./texteditor
-```
+Open file
+Create File
+Info
+Help
+Quit
+==================================================
+Sawgit>
 
-## 3. Preview Program
-Contoh tampilan menu program:
+Pilih menu dengan menekan angka **1-5** di keyboard.
 
-```
-===== Saw<git> | Text Editor Gabungan =====
-Ketik: ./i (info), ./file (render), ./edit (ketik), ./cls (bersih), ./q (keluar)
-sawgit>...
-```
-Jika ada data sebelumnya (autosave), akan muncul:
+---
 
-```
-[!] Berhasil memulihkan data dari sesi sebelumnya.
-```
+### 2. Open File (Angka 1)
+Membuka file teks yang sudah ada di disk:
+[OPEN] Masukkan nama file: catatan.txt
+[INFO] catatan.txt berhasil dibuka. 3 baris dimuat.
+Setelah file terbuka, program langsung masuk ke mode editor.
 
-Screenshot:
-![Tampilan Menu](img/screenshot_menu.png) 
+---
 
-## Daftar Perintah
-Di menu utama, tersedia beberapa command:
-```
-./i     -> Informasi program
-./file  -> Menampilkan isi text (render)
-./edit  -> Masuk mode edit
-./cls   -> Membersihkan layar
-./q     -> Keluar dari program
-```
+### 3. Create File (Angka 2)
+Membuat file baru dengan buffer kosong, langsung masuk mode editor.
 
-## Contoh penggunaan:
-### 1. Perintah ./i (Info Program)
-Menampilkan informasi tentang program:
-```
-[INFO] Text Editor Console - Tim Saw<git>.
-Fitur: Buffer 2D Array, Autosave, Signal Recovery, & Renderer.
-```
-Screenshot:
-![Tampilan Menu](img/screenshot_info.png) 
+---
 
-### 2. Perintah ./file (Render Text)
-Menampilkan isi text yang sudah disimpan:
-```
-(Tampilan isi text di layar)
+### 4. Mode Editor — Shortcut Keyboard
+Setelah masuk mode editor, gunakan shortcut berikut:
+Ctrl+S  → Simpan file (Save jika sudah punya nama, Save As jika baru)
+Ctrl+O  → Buka file lain dari dalam editor
+Ctrl+N  → Buat file baru dari dalam editor
+Ctrl+Q  → Keluar dari program
+Ctrl+I  → Info aplikasi
+Ctrl+G  → Bantuan shortcut
+ESC     → Kembali ke menu utama
+Panah   → Navigasi kursor
 
---- Editor Saw<git> | Mode: Preview ---
-(Tekan Enter untuk kembali)
-```
-Screenshot:
-![Tampilan File](img/screenshot_file.png) 
+---
 
-### 3. Perintah ./edit (Mode Edit File)
-Masuk ke mode penulisan text:
-```
---- MODE EDIT (Ketik 'exit' untuk simpan & kembali, Ctrl+C untuk crash) ---
-```
-Cara pakai:
-- Ketik [text] → otomatis masuk ke buffer
-- Setiap baris akan autosave
-- Ketik exit → kembali ke menu utama
+### 5. Simpan File (Ctrl+S)
+**Jika file sudah punya nama (dari Open):**
+[INFO] Perubahan berhasil disimpan ke file catatan.txt
+Tekan sembarang tombol...
 
-Autosave & Recovery:
-- Setiap input di mode edit akan otomatis disimpan
-- Jika program crash (Ctrl + C), data tetap aman
-- Saat program dijalankan ulang → data akan direstore
+**Jika file baru (dari Create):**
+[SAVE AS] Masukkan nama file baru: output.txt
+[INFO] Perubahan berhasil disimpan ke file output.txt
+Tekan sembarang tombol...
+Nama file tidak boleh kosong — program akan minta input ulang.
+
+---
+
+### 6. Status Bar
+Di bagian bawah editor selalu tampil status terkini:
+
+[Unsaved Changes] | File: catatan.txt | Baris: 5
+Posisi: Baris 3, Kolom 7 | Ctrl+S: Save | ESC: Menu
+- `[Unsaved Changes]` → ada perubahan belum disimpan
+- `[Saved]` → semua perubahan sudah tersimpan
+
+---
+
+### 7. Autosave & Recovery
+- Setiap keystroke otomatis disimpan ke `recovery.tmp`
+- Jika program crash atau di-kill mendadak (SIGTERM), data tetap aman
+- Saat program dibuka kembali, data dipulihkan otomatis:
+[!] Recovery ditemukan, 5 baris dimuat.
+Tekan sembarang tombol untuk lanjut...
+Program langsung masuk editor dengan data sesi sebelumnya.
 
 Contoh saat crash:
-```
 [!] Program diinterupsi. Menyimpan recovery...
 [!] Recovery tersimpan. Program keluar.
-```
 
-Screenshot:
-![Tampilan Edit](img/screenshot_edit.png) 
+---
 
-### 4. Perintah ./cls (Clear Terminal)
-Membersihkan tampilan terminal, dan kembali ke menu utama.
+### 8. Keluar Program (Ctrl+Q)
+**Jika ada perubahan belum disimpan:**
+[WARNING] Perubahan belum disimpan! Tetap keluar? (y/n):
 
-### 5. Perintah ./q (Exit Program)
-Keluar dari program secara normal:
-```
-Keluar dari program... Sampai jumpa!
-```
-Screenshot:
-![Tampilan Menu](img/screenshot_exit.png) 
-
-### 6. Perintah ./save (Simpan File)
-Menyimpan isi teks ke file:
-```
-Masukkan nama file (contoh: output.txt): 
-```
-Cara pakai:
-- Ketik `./save` di menu utama
-- Masukkan nama file yang diinginkan
-- Nama file boleh dua kata (contoh: `catatan harian`)
-- Nama file tidak boleh kosong — program akan minta input ulang
-
-Contoh saat nama kosong:
-```
-[ERROR] Nama file tidak boleh kosong! Silakan coba lagi.
-Masukkan nama file (contoh: output.txt):
-```
-
-Contoh berhasil:
-```
-[INFO] File berhasil disimpan ke output.txt
-```
-
+**Jika sudah tersimpan:**
+[QUIT] Keluar dari Saw<git>? (y/n):
+Tekan `y` untuk konfirmasi keluar. `recovery.tmp` otomatis dihapus.
 ## Cara Kerja Recovery
 
 Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
 
 ### Alur Recovery:
 1. Setiap kali user mengetik lalu data otomatis disimpan ke `recovery.tmp`.
-2. Jika program crash (Ctrl+C / mati mendadak), maka `recovery.tmp` tetap ada.
+2. Jika program crash (mati mendadak), maka `recovery.tmp` tetap ada.
 3. Saat program dibuka kembali maka data dipulihkan otomatis dari `recovery.tmp`.
-4. Jika user keluar normal (`./q`) maka `recovery.tmp` dihapus otomatis.
+4. Jika user berhasil Ctrl+S (save), recovery.tmp otomatis dihapus karena data sudah aman di file .txt permanen.
+5. Jika user keluar normal (Ctrl+Q + konfirmasi), 
+   recovery.tmp dihapus otomatis.
+6. Jika program crash atau di-kill dari luar (SIGTERM), signal handler otomatis memanggil writeRecovery() sebelum program mati dan data tetap aman.
 
 ### File Recovery:
 1. `recovery.tmp` berfungsi sebagai file sementara untuk autosave.
@@ -228,7 +201,7 @@ Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
 3. `recovery.h`  berfungsi sebagai header file modul recovery.
 
 ### Fungsi Recovery:
-1. `checkRecovery()` berfungsi untuk cek dan muat data recovery saat startup.
+1. `checkRecovery()` berfungsi untuk cek dan muat data recovery saat startup. Mengembalikan nilai 1 jika recovery ditemukan (program langsung buka editor), atau 0 jika tidak ada (program tampilkan menu utama).
 2. `writeRecovery()` berfungsi untuk menyimpan buffer ke recovery.tmp.
 3. `clearRecovery()` berfungsi untuk menghapus recovery.tmp saat exit normal.
 
