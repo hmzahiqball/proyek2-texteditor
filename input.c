@@ -250,6 +250,14 @@ void handleEditInput(char *filename)
             delete_char();
             markAsModified();
         } 
+        // Delete key (224 + 83)
+        else if (c == 224) {
+            c = _getch();
+            if (c == 83) { // Delete
+                delete_char_forward();
+                markAsModified();
+            }
+        }
         // Enter
         else if (c == 13) 
 		{ 

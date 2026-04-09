@@ -28,6 +28,9 @@ void insert_char(char c);
 // Delete Karakter (Backspace)
 void delete_char();
 
+// Delete Karakter Forward (Delete key)
+void delete_char_forward();
+
 // Insert Newline (Enter)
 void insert_newline();
 
