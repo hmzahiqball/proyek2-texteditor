@@ -11,27 +11,101 @@
 
 // Definisi fungsi Editor ditaruh di atas agar Menu mengenalnya
 
+void markAsModified() {
+    is_modified = 1;
+    writeRecovery(); // Pastikan recovery file selalu update tiap ada ketikan
+}
+
 // Menangani aksi membuka file
-void handleOpenAction() 
-{
+void handleOpenAction() {
+    // 1. LOGIKA SAAT DI DALAM EDITOR (Ctrl+O)
+    if (is_in_editor == 1) 
+	{
+        // Cek apakah ada perubahan yang belum disimpan
+        if (is_modified == 1) 
+		{
+            strcpy(bottom_message, "[WARNING] Perubahan belum disimpan! Buka file lain? (y/n): ");
+        } 
+		else 
+		{
+            strcpy(bottom_message, "[OPEN] Buka file lain? (y/n): ");
+        }
+        
+        show_message = 1;
+        renderScreen(text_buffer, total_lines);
+
+        // Jika user batal (tidak tekan 'y'), kembali ke editor
+        if (_getch() != 'y') {
+            show_message = 0;
+            return; 
+        }
+        
+        // Jika lanjut, minta nama file di baris pesan bawah
+        input_mode = 1; 
+        strcpy(bottom_message, "[OPEN] Masukkan nama file: ");
+        renderScreen(text_buffer, total_lines);
+    } 
+    // 2. LOGIKA SAAT DI MENU UTAMA (Pilih angka 1)
+    else {
+        // Tampilkan instruksi tepat di samping prompt "Sawgit> "
+        printf("\n[OPEN] Masukkan nama file: "); 
+        fflush(stdout); // Memastikan teks muncul sebelum fgets dijalankan
+    }
+
+    // 3. PROSES PENGAMBILAN INPUT (Berlaku untuk Editor & Menu)
     char filename[100];
-    printf("\n[OPEN] Masukkan nama file: ");
     if (fgets(filename, sizeof(filename), stdin) != NULL) 
 	{
-        filename[strcspn(filename, "\n")] = 0; // Bersihkan newline
-        openFile(filename); // Muat file ke RAM
-        handleEditInput(filename); // Masuk mode edit
+        // Hilangkan karakter newline di akhir input
+        filename[strcspn(filename, "\n")] = 0; 
+        
+        // Reset state visual agar kursor kembali ke posisi normal
+        input_mode = 0; 
+        show_message = 0;
+
+        // Jika nama file tidak kosong, muat file dan masuk ke editor
+        if (strlen(filename) > 0) {
+            openFile(filename);
+            handleEditInput(filename);
+        }
     }
+    
+    // Pastikan status selalu bersih jika input dibatalkan atau gagal
+    input_mode = 0; 
+    show_message = 0; 
 }
 
 // Menangani aksi membuat file baru
 void handleNewFileAction() 
 {
-    clearBuffer(); // Kosongkan buffer
-    initCursor();  // Reset kursor
+    // 1. Cek pengaman jika dipanggil dari editor
+    if (is_in_editor == 1) 
+	{
+        if (is_modified == 1) 
+		{
+            strcpy(bottom_message, "[WARNING] Perubahan belum disimpan! Buat file baru? (y/n): ");
+        } 
+		else 
+		{
+            strcpy(bottom_message, "[NEW FILE] Buat file baru? (y/n): ");
+        }
+        
+        show_message = 1;
+        renderScreen(text_buffer, total_lines);
+
+        if (_getch() != 'y') {
+            show_message = 0;
+            return; // Batal eksekusi
+        }
+        show_message = 0;
+    }
+
+    // 2. Alur pembuatan file baru seperti biasa
+    clearBuffer();
+    initCursor();
     strcpy(current_filename, "Untitled");
     is_modified = 0;
-    handleEditInput(""); // Buka editor kosong
+    handleEditInput(""); // Masuk kembali ke editor
 }
 
 void handleSaveAction()
@@ -40,7 +114,7 @@ void handleSaveAction()
 	{
         saveToFile(current_filename);
 
-        sprintf(bottom_message, "[INFO] File berhasil disimpan ke %s", current_filename);
+        sprintf(bottom_message, "[INFO] Perubahan berhasil disimpan ke file %s", current_filename);
         show_message = 1;
     } 
 	else 
@@ -61,7 +135,7 @@ void handleSaveAction()
 		{
             saveToFile(current_filename);
 
-            sprintf(bottom_message, "[INFO] File berhasil disimpan ke %s", current_filename);
+            sprintf(bottom_message, "[INFO] Perubahan berhasil disimpan ke file %s", current_filename);
             show_message = 1;
         }
     }
@@ -72,7 +146,6 @@ void handleSaveAction()
     _getch();
 
     show_message = 0; // reset biar hilang
-	
 }
 
 void handleExitAction() 
@@ -95,7 +168,6 @@ void handleExitAction()
 	else 
 	{
         // Kalau is_in_editor == 0, pasti lagi di menu utama
-        printf("\n Jika ");
 		printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
     }
 
@@ -134,20 +206,12 @@ void handleEditInput(char *filename)
 		// Ctrl+O: Open
         else if (c == 15) 
 		{ 
-            printf("\n[WARNING] Mau membuka file lain? Data saat ini akan hilang (y/n): ");
-            if (_getch() == 'y') 
-			{
-				handleOpenAction();
-			}
+			handleOpenAction();
         }
         // Ctrl+N: New
         else if (c == 14) 
 		{ 
-            printf("\n[WARNING] Mau membuat file baru? Data saat ini akan hilang (y/n): ");
-            if (_getch() == 'y') 
-			{
-            	handleNewFileAction();
-			}
+        	handleNewFileAction();
         }
         // Ctrl+Q: Quit
         else if (c == 17) 
@@ -184,22 +248,19 @@ void handleEditInput(char *filename)
         // Backspace
         else if (c == 8) { 
             delete_char();
-            is_modified = 1;
-            writeRecovery();
+            markAsModified();
         } 
         // Enter
         else if (c == 13) 
 		{ 
             insert_newline(); 
-            is_modified = 1;
-            writeRecovery(); 
+            markAsModified(); 
         } 
         else if (c >= 32 && c <= 126) 
         // Char
 		{ 
             insert_char((char)c); 
-            is_modified = 1;
-            writeRecovery(); 
+            markAsModified(); 
         }
     }
 }

@@ -63,8 +63,8 @@ void renderHelpScreen()
     printf(" Ctrl + N : Untuk membuka file baru               \n");
     printf(" Ctrl + I : Untuk membuka informasi aplikasi      \n");
     printf(" Ctrl + G : Untuk membuka informasi shortcut      \n");
-    printf(" Ctrl + S : Untuk menyimpan perbuhan file         \n");
-    printf(" 			Save (Pada Menu Open) / Save As (Pada menu Create)     \n");
+    printf(" Ctrl + S : Untuk menyimpan perubahan file         \n");
+    printf("            Save (Pada Menu Open) / Save As (Pada menu Create)\n");
     printf(" Ctrl + Q : Keluar dari Program                   \n");
     printf(" ESC      : Kembali ke Menu Utama                 \n");
     printf(" Panah    : Navigasi Kursor                       \n");
