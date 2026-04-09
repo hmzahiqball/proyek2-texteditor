@@ -5,6 +5,7 @@
 
 #include "buffer.h"
 
+extern int is_modified;
 extern int view_row_offset;
 extern int view_col_offset;
 extern int input_mode;

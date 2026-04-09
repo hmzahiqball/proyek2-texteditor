@@ -5,6 +5,7 @@
 #include "buffer.h"
 #include "cursor.h"
 
+
 extern int is_modified;
 extern char current_filename[256];
 extern int total_lines;
@@ -15,6 +16,7 @@ int view_col_offset = 0;
 char bottom_message[256] = "";
 int show_message = 0;
 int input_mode = 0;
+int is_in_editor = 0;
 
 void renderMainMenu() {
     system("cls"); // Pastikan layar bersih
@@ -87,14 +89,16 @@ void renderScreen(char buffer[MAX_ROW][MAX_COL], int rows) {
         printf("[Saved] | File: %s | Baris: %d\n", current_filename, total_lines);
     }
     printf("--------------------------------------------------\n");
-    printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | ESC: Menu\n", cursor_row + 1, cursor_col + 1);
+    printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | ESC: Menu\033[K\n", 
+       cursor_row + 1, cursor_col + 1);
 
-    if (show_message) {
-        printf("\n%s\n", bottom_message);
-    }
+	// CETAK PESAN DI SINI (Di bawah garis kursor)
+	if (show_message) {
+	    printf("\n%s\033[K", bottom_message); 
+	}
 
     if (input_mode) {
-    // 🔥 posisi message = setelah semua UI
+    // posisi message = setelah semua UI
     int msg_line = visible_lines + 7;
 
     // ambil panjang teks terakhir (buat posisi kolom)

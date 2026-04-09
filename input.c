@@ -31,18 +31,33 @@ void handleNewFileAction() {
     handleEditInput(""); // Buka editor kosong
 }
 
-// Menangani aksi keluar program
 void handleExitAction() {
-    printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
+    // 1. Cek apakah kita punya file yang lagi dibuka (ada di editor)
+    // Kalau total_lines > 0, berarti kita dari editor
+    if (is_in_editor == 1) { 
+        strcpy(bottom_message, "[QUIT] Keluar dari Saw<git>? (y/n): ");
+        show_message = 1;
+        renderScreen(text_buffer, total_lines);
+    } else {
+        // Kalau is_in_editor == 0, pasti kita lagi di menu utama
+        printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
+    }
+
     int confirm = _getch();
     if (confirm == 'y' || confirm == 'Y') {
-        clearRecovery(); // Hapus file temporary
-        exit(0);
+        clearRecovery();
+        system("cls");
+        exit(0); 
     }
+    
+    // Reset status jika batal
+    show_message = 0;
+    strcpy(bottom_message, "");
 }
 
-
 void handleEditInput(char *filename) {
+	is_in_editor = 1;
+	
     if (total_lines == 0) total_lines = 1;
     extern char current_filename[256];
     strcpy(current_filename, filename);
@@ -53,6 +68,7 @@ void handleEditInput(char *filename) {
 
         // Navigasi & Keluar
         if (c == 27) {
+        	is_in_editor = 0;
         	break; // ESC: Back to Menu	
 		}
         else if (c == 15) { // Ctrl+O: Open

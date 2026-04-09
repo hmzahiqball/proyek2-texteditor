@@ -1,6 +1,8 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+extern int is_in_editor;
+
 /**
  * handleMenuInput:
  * Menangani input angka 1-5 di layar utama.
