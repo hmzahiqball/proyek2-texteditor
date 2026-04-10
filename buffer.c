@@ -3,10 +3,12 @@
 #include "buffer.h"
 #include "cursor.h"
 
+// Buffer teks utama sebagai array 2D
 char text_buffer[MAX_ROW][MAX_COL];
 int total_lines = 0;
 int line_length[MAX_ROW];
 
+// Inisialisasi buffer dengan mengosongkan semua elemen
 void initBuffer() {
     int i, j;
     for (i = 0; i < MAX_ROW; i++) {
@@ -18,6 +20,7 @@ void initBuffer() {
     total_lines = 0;
 }
 
+// Mengosongkan seluruh buffer teks
 void clearBuffer() {
     int i, j;
     for (i = 0; i < MAX_ROW; i++) {
@@ -29,6 +32,7 @@ void clearBuffer() {
     total_lines = 0;
 }
 
+// Menambahkan baris baru ke akhir buffer
 void appendLine(const char *input) {
     if (total_lines >= MAX_ROW) return;
 
@@ -42,6 +46,7 @@ void appendLine(const char *input) {
     total_lines++;
 }
 
+// Menyisipkan karakter pada posisi cursor
 void insert_char(char c) {
     int len = line_length[cursor_row];
 
@@ -67,6 +72,7 @@ void insert_char(char c) {
     adjust_viewport();
 }
 
+// Menghapus karakter sebelum cursor (backspace)
 void delete_char() {
     if (cursor_col > 0) {
         int len = line_length[cursor_row];
@@ -115,6 +121,7 @@ void delete_char() {
     adjust_viewport();
 }
 
+// Menghapus karakter setelah cursor (delete key)
 void delete_char_forward() {
     int len = line_length[cursor_row];
 
@@ -157,6 +164,7 @@ void delete_char_forward() {
     adjust_viewport();
 }
 
+// Menyisipkan baris baru pada posisi cursor
 void insert_newline() {
     if (total_lines >= MAX_ROW) return;
 
@@ -193,6 +201,7 @@ void insert_newline() {
     adjust_viewport();
 }
 
+// Mendapatkan panjang baris tertentu
 int getLineLength(int row) {
     if (row < 0 || row >= total_lines) return 0;
     return line_length[row];

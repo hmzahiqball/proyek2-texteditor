@@ -1,6 +1,7 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+// Konstanta untuk batas maksimal baris dan kolom buffer teks
 #define MAX_ROW 100
 #define MAX_COL 100
 
@@ -9,8 +10,10 @@ extern char text_buffer[MAX_ROW][MAX_COL];
 extern int total_lines;
 extern int line_length[MAX_ROW];
 
+// Fungsi untuk mendapatkan panjang baris tertentu
 int getLineLength(int row);
 
+// Fungsi untuk mendapatkan karakter pada posisi tertentu
 char getCharAt(int row, int col);
 
 // Fungsi untuk inisialisasi buffer kosong
@@ -33,7 +36,5 @@ void delete_char_forward();
 
 // Insert Newline (Enter)
 void insert_newline();
-
-int getLineLength(int row);
 
 #endif
