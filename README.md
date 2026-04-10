@@ -76,20 +76,31 @@ gcc main.c -o texteditor
 
 # Instalasi
 
-Jika compiler belum tersedia, install terlebih dahulu.
+Jika GCC belum tersedia, install **MinGW** terlebih dahulu:
 
-### Linux
+1. Download MinGW dari https://www.mingw-w64.org
+2. Install dan tambahkan path GCC ke Environment Variables Windows
+3. Verifikasi instalasi:
 
 ```bash
-sudo apt install build-essential
+gcc --version
 ```
 
-### Windows
+---
 
-Gunakan salah satu:
+## 1. Compile Program
 
-- **MinGW**
-- **WSL (Windows Subsystem for Linux)**
+Pastikan semua file `.c` ada di satu folder, lalu compile menggunakan Command Prompt:
+
+```bash
+gcc main.c recovery.c file_io.c buffer.c render.c input.c cursor.c -o app
+```
+
+## 2. Jalankan Program
+
+```bash
+./app
+```
 
 ---
 
@@ -109,6 +120,12 @@ Quit
 Sawgit>
 
 Pilih menu dengan menekan angka **1-5** di keyboard.
+
+Jika ada data recovery dari sesi sebelumnya:
+[!] Recovery ditemukan, 5 baris dimuat.
+Tekan sembarang tombol untuk lanjut...
+
+Program langsung masuk ke editor dengan data sesi sebelumnya.
 
 ---
 
@@ -182,6 +199,7 @@ Contoh saat crash:
 **Jika sudah tersimpan:**
 [QUIT] Keluar dari Saw<git>? (y/n):
 Tekan `y` untuk konfirmasi keluar. `recovery.tmp` otomatis dihapus.
+
 ## Cara Kerja Recovery
 
 Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
@@ -196,9 +214,22 @@ Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
 6. Jika program crash atau di-kill dari luar (SIGTERM), signal handler otomatis memanggil writeRecovery() sebelum program mati dan data tetap aman.
 
 ### File Recovery:
-1. `recovery.tmp` berfungsi sebagai file sementara untuk autosave.
-2. `recovery.c` berfungsi sebagai modul yang mengelola recovery.
-3. `recovery.h`  berfungsi sebagai header file modul recovery.
+
+| File | Fungsi |
+|------|--------|
+| `recovery.tmp` | File sementara untuk autosave |
+| `recovery.c` | Modul yang mengelola recovery |
+| `recovery.h` | Header file modul recovery |
+
+### Fungsi Recovery:
+
+| Fungsi | Keterangan |
+|--------|------------|
+| `checkRecovery()` | Cek dan muat data recovery saat startup. Return `1` jika ditemukan (langsung buka editor), return `0` jika tidak ada (tampilkan menu) |
+| `writeRecovery()` | Simpan isi buffer ke `recovery.tmp` — dipanggil otomatis setiap keystroke |
+| `clearRecovery()` | Hapus `recovery.tmp` saat keluar normal atau setelah save berhasil |
+
+---
 
 ### Fungsi Recovery:
 1. `checkRecovery()` berfungsi untuk cek dan muat data recovery saat startup. Mengembalikan nilai 1 jika recovery ditemukan (program langsung buka editor), atau 0 jika tidak ada (program tampilkan menu utama).
