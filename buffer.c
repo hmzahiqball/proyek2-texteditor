@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
 #include "buffer.h"
 #include "cursor.h"
 
@@ -34,6 +36,11 @@ void clearBuffer() {
 
 // Menambahkan baris baru ke akhir buffer
 void appendLine(const char *input) {
+    if (input == NULL) {
+        printf("Error: String input NULL. Tidak dapat menambahkan baris.\n");
+        return;
+    }
+    assert(input != NULL); // Error handling: input tidak boleh NULL
     if (total_lines >= MAX_ROW) return;
 
     int len = strlen(input);
@@ -48,6 +55,16 @@ void appendLine(const char *input) {
 
 // Menyisipkan karakter pada posisi cursor
 void insert_char(char c) {
+    if (cursor_row < 0 || cursor_row >= MAX_ROW) {
+        printf("Error: cursor_row (%d) di luar batas [0, %d).\n", cursor_row, MAX_ROW);
+        return;
+    }
+    if (cursor_col < 0 || cursor_col > MAX_COL) {
+        printf("Error: cursor_col (%d) di luar batas [0, %d].\n", cursor_col, MAX_COL);
+        return;
+    }
+    assert(cursor_row >= 0 && cursor_row < MAX_ROW); // Error handling: cursor_row dalam batas
+    assert(cursor_col >= 0 && cursor_col <= MAX_COL); // Error handling: cursor_col dalam batas
     int len = line_length[cursor_row];
 
     if (len >= MAX_COL - 1) return; // Tidak bisa insert jika sudah penuh
@@ -74,6 +91,16 @@ void insert_char(char c) {
 
 // Menghapus karakter sebelum cursor (backspace)
 void delete_char() {
+    if (cursor_row < 0 || cursor_row >= MAX_ROW) {
+        printf("Error: cursor_row (%d) di luar batas [0, %d).\n", cursor_row, MAX_ROW);
+        return;
+    }
+    if (cursor_col < 0 || cursor_col > MAX_COL) {
+        printf("Error: cursor_col (%d) di luar batas [0, %d].\n", cursor_col, MAX_COL);
+        return;
+    }
+    assert(cursor_row >= 0 && cursor_row < MAX_ROW); // Error handling: cursor_row dalam batas
+    assert(cursor_col >= 0 && cursor_col <= MAX_COL); // Error handling: cursor_col dalam batas
     if (cursor_col > 0) {
         int len = line_length[cursor_row];
 
@@ -166,6 +193,16 @@ void delete_char() {
 
 // Menyisipkan baris baru pada posisi cursor
 void insert_newline() {
+    if (cursor_row < 0 || cursor_row >= MAX_ROW) {
+        printf("Error: cursor_row (%d) di luar batas [0, %d).\n", cursor_row, MAX_ROW);
+        return;
+    }
+    if (cursor_col < 0 || cursor_col > MAX_COL) {
+        printf("Error: cursor_col (%d) di luar batas [0, %d].\n", cursor_col, MAX_COL);
+        return;
+    }
+    assert(cursor_row >= 0 && cursor_row < MAX_ROW); // Error handling: cursor_row dalam batas
+    assert(cursor_col >= 0 && cursor_col <= MAX_COL); // Error handling: cursor_col dalam batas
     if (total_lines >= MAX_ROW) return;
 
     int len = line_length[cursor_row];
@@ -203,11 +240,26 @@ void insert_newline() {
 
 // Mendapatkan panjang baris tertentu
 int getLineLength(int row) {
+    if (row < 0 || row >= MAX_ROW) {
+        printf("Error: baris (%d) di luar batas [0, %d).\n", row, MAX_ROW);
+        return 0;
+    }
+    assert(row >= 0 && row < MAX_ROW); // Error handling: row dalam batas
     if (row < 0 || row >= total_lines) return 0;
     return line_length[row];
 }
 
 char getCharAt(int row, int col) {
+    if (row < 0 || row >= MAX_ROW) {
+        printf("Error: baris (%d) di luar batas [0, %d).\n", row, MAX_ROW);
+        return '\0';
+    }
+    if (col < 0 || col >= MAX_COL) {
+        printf("Error: kolom (%d) di luar batas [0, %d).\n", col, MAX_COL);
+        return '\0';
+    }
+    assert(row >= 0 && row < MAX_ROW); // Error handling: row dalam batas
+    assert(col >= 0 && col < MAX_COL); // Error handling: col dalam batas
     if (row < 0 || row >= total_lines) return '\0';
     if (col < 0 || col >= line_length[row]) return '\0';
     return text_buffer[row][col];

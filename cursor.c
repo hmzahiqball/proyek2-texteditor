@@ -1,4 +1,6 @@
 #include <string.h>
+#include <stdio.h>
+#include <assert.h>
 #include "cursor.h"
 #include "buffer.h"
 #include "render.h"
@@ -15,6 +17,11 @@ void initCursor() {
 
 // Membatasi posisi cursor agar tetap dalam batas buffer
 void limitCursorBounds() {
+    if (total_lines < 0 || total_lines > MAX_ROW) {
+        printf("Error: total_lines (%d) di luar batas [0, %d].\n", total_lines, MAX_ROW);
+        return;
+    }
+    assert(total_lines >= 0 && total_lines <= MAX_ROW); // Error handling: total_lines dalam batas
     if (cursor_row < 0) cursor_row = 0;
 
     if (total_lines == 0) {
@@ -48,6 +55,16 @@ void set_cursor_to_end() {
 
 // Gerakan cursor ke kiri
 void move_left() {
+    if (cursor_row < 0 || cursor_row >= MAX_ROW) {
+        printf("Error: cursor_row (%d) di luar batas [0, %d).\n", cursor_row, MAX_ROW);
+        return;
+    }
+    if (cursor_col < 0 || cursor_col > MAX_COL) {
+        printf("Error: cursor_col (%d) di luar batas [0, %d].\n", cursor_col, MAX_COL);
+        return;
+    }
+    assert(cursor_row >= 0 && cursor_row < MAX_ROW); // Error handling: cursor_row dalam batas
+    assert(cursor_col >= 0 && cursor_col <= MAX_COL); // Error handling: cursor_col dalam batas
     if (cursor_col > 0) {
         cursor_col--;
     } else if (cursor_row > 0) {
@@ -59,6 +76,16 @@ void move_left() {
 
 // Gerakan cursor ke kanan
 void move_right() {
+    if (cursor_row < 0 || cursor_row >= MAX_ROW) {
+        printf("Error: cursor_row (%d) di luar batas [0, %d).\n", cursor_row, MAX_ROW);
+        return;
+    }
+    if (cursor_col < 0 || cursor_col > MAX_COL) {
+        printf("Error: cursor_col (%d) di luar batas [0, %d].\n", cursor_col, MAX_COL);
+        return;
+    }
+    assert(cursor_row >= 0 && cursor_row < MAX_ROW); // Error handling: cursor_row dalam batas
+    assert(cursor_col >= 0 && cursor_col <= MAX_COL); // Error handling: cursor_col dalam batas
     int len = getLineLength(cursor_row);
 
     if (cursor_col < len) {
@@ -72,6 +99,16 @@ void move_right() {
 
 // Gerakan cursor ke atas
 void move_up() {
+    if (cursor_row < 0 || cursor_row >= MAX_ROW) {
+        printf("Error: cursor_row (%d) di luar batas [0, %d).\n", cursor_row, MAX_ROW);
+        return;
+    }
+    if (cursor_col < 0 || cursor_col > MAX_COL) {
+        printf("Error: cursor_col (%d) di luar batas [0, %d].\n", cursor_col, MAX_COL);
+        return;
+    }
+    assert(cursor_row >= 0 && cursor_row < MAX_ROW); // Error handling: cursor_row dalam batas
+    assert(cursor_col >= 0 && cursor_col <= MAX_COL); // Error handling: cursor_col dalam batas
     if (cursor_row > 0) {
         cursor_row--;
         int len = getLineLength(cursor_row);
@@ -82,6 +119,16 @@ void move_up() {
 
 // Gerakan cursor ke bawah
 void move_down() {
+    if (cursor_row < 0 || cursor_row >= MAX_ROW) {
+        printf("Error: cursor_row (%d) di luar batas [0, %d).\n", cursor_row, MAX_ROW);
+        return;
+    }
+    if (cursor_col < 0 || cursor_col > MAX_COL) {
+        printf("Error: cursor_col (%d) di luar batas [0, %d].\n", cursor_col, MAX_COL);
+        return;
+    }
+    assert(cursor_row >= 0 && cursor_row < MAX_ROW); // Error handling: cursor_row dalam batas
+    assert(cursor_col >= 0 && cursor_col <= MAX_COL); // Error handling: cursor_col dalam batas
     if (cursor_row < total_lines - 1) {
         cursor_row++;
         int len = getLineLength(cursor_row);
@@ -92,6 +139,11 @@ void move_down() {
 
 // Menyesuaikan viewport berdasarkan posisi cursor
 void adjust_viewport() {
+    if (cursor_row < 0 || cursor_row >= MAX_ROW) {
+        printf("Error: cursor_row (%d) di luar batas [0, %d).\n", cursor_row, MAX_ROW);
+        return;
+    }
+    assert(cursor_row >= 0 && cursor_row < MAX_ROW); // Error handling: cursor_row dalam batas
     if (cursor_row < view_row_offset) {
         view_row_offset = cursor_row;
     } 

@@ -233,7 +233,11 @@ Untuk memberikan pengalaman penyuntingan yang responsif, program mengimplementas
 * **Penghapusan (Backspace)**: 
     * Jika dilakukan di tengah baris, karakter akan digeser ke kiri menggunakan `memmove`.
     * Jika dilakukan di awal baris (kolom 0), isi baris saat ini akan digabungkan ke baris sebelumnya menggunakan `memcpy`, lalu baris-baris di bawahnya digeser naik untuk mengisi kekosongan.
-* **Pemisahan Baris (Enter/Newline)**: Teks di sebelah kanan kursor disalin ke baris baru menggunakan `memcpy`. Baris-baris di bawah posisi kursor kemudian digeser turun satu tingkat untuk menjaga urutan teks.
+#### 3. Error Handling & Validasi
+Untuk meningkatkan keamanan dan stabilitas, program dilengkapi dengan mekanisme error handling yang mencakup:
+* **Validasi Input**: Fungsi seperti `appendLine` memeriksa apakah string input tidak NULL sebelum diproses.
+* **Bounds Checking**: Semua operasi manipulasi karakter (insert, delete, newline) memvalidasi posisi kursor (`cursor_row`, `cursor_col`) agar tetap dalam batas array [0, MAX_ROW) dan [0, MAX_COL].
+* **Pesan Error**: Jika terjadi kesalahan (misalnya, posisi kursor di luar batas), program menampilkan pesan error dalam bahasa Indonesia dan menghentikan operasi tanpa crash, memungkinkan pengguna untuk melanjutkan editing.
 
 ---
 
@@ -248,7 +252,11 @@ Fungsi `limitCursorBounds` bertugas menjaga agar kursor tetap berada dalam area 
 
 #### 2. Navigasi dan Viewport Scrolling
 * **Smart Navigation**: Saat berpindah baris (atas/bawah), jika baris tujuan memiliki panjang yang lebih pendek dari posisi kolom kursor saat ini, kursor secara otomatis akan berpindah ke akhir baris tersebut.
-* **Viewport Scrolling**: Fungsi `adjust_viewport` mendeteksi jika kursor bergerak keluar dari batas vertikal layar terminal. Jika ini terjadi, variabel `view_row_offset` akan diperbarui sehingga tampilan layar bergeser mengikuti pergerakan kursor.
+#### 3. Error Handling & Validasi
+Untuk mencegah navigasi yang tidak valid, modul kursor dilengkapi dengan error handling:
+* **Validasi Posisi Kursor**: Setiap fungsi gerakan (move_left, move_right, dll.) memeriksa apakah `cursor_row` dan `cursor_col` dalam batas aman sebelum melakukan perubahan.
+* **Boundary Protection**: Fungsi `limitCursorBounds` dan `adjust_viewport` memvalidasi `total_lines` dan posisi kursor untuk menghindari akses array di luar batas.
+* **Pesan Error**: Jika posisi kursor invalid, program menampilkan pesan error dalam bahasa Indonesia dan menghentikan gerakan, menjaga stabilitas editor.
 
 ---
 
@@ -262,6 +270,7 @@ Implementasi buffer ini memiliki batasan teknis sebagai berikut:
 | **Kapasitas Kolom** | Jumlah total karakter per baris | 100 Karakter |
 | **Tipe Data** | Format penyimpanan karakter | `char` (1 Byte) |
 | **Scrolling** | Mekanisme tampilan | Vertikal (Row-offset) |
+| **Error Handling** | Mekanisme validasi | Bounds checking & pesan error (Bahasa Indonesia) |
 
 ---
 
