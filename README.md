@@ -216,7 +216,56 @@ Contoh saat crash:
 
 ---
 
-### 8. Keluar Program (Ctrl+Q)
+### 8. Arsitektur Buffer & Logika Manipulasi Teks
+
+Bagian ini menjelaskan bagaimana data teks dikelola di dalam memori menggunakan struktur array 2 dimensi dan bagaimana manipulasi karakter dilakukan secara efisien melalui operasi memori langsung.
+
+#### 1. Struktur Data Utama
+Program menggunakan representasi **Array 2D Statis** sebagai basis penyimpanan teks:
+* **`text_buffer[MAX_ROW][MAX_COL]`**: Array global yang berfungsi sebagai buffer teks utama untuk menyimpan setiap karakter.
+* **`line_length[MAX_ROW]`**: Array pendukung yang melacak jumlah karakter secara presisi pada setiap baris.
+* **`total_lines`**: Variabel global yang mencatat jumlah baris yang saat ini terisi di dalam buffer.
+
+#### 2. Mekanisme Edit Teks
+Untuk memberikan pengalaman penyuntingan yang responsif, program mengimplementasikan logika pergeseran memori (*memory shifting*):
+
+* **Penyisipan Karakter (Insert)**: Saat karakter baru dimasukkan, program menggunakan fungsi `memmove` untuk menggeser seluruh karakter di sebelah kanan kursor sebanyak satu posisi ke kanan.
+* **Penghapusan (Backspace)**: 
+    * Jika dilakukan di tengah baris, karakter akan digeser ke kiri menggunakan `memmove`.
+    * Jika dilakukan di awal baris (kolom 0), isi baris saat ini akan digabungkan ke baris sebelumnya menggunakan `memcpy`, lalu baris-baris di bawahnya digeser naik untuk mengisi kekosongan.
+* **Pemisahan Baris (Enter/Newline)**: Teks di sebelah kanan kursor disalin ke baris baru menggunakan `memcpy`. Baris-baris di bawah posisi kursor kemudian digeser turun satu tingkat untuk menjaga urutan teks.
+
+---
+
+### 9. Sistem Kontrol Kursor & Viewport
+
+Modul kursor mengelola navigasi pengguna dan memastikan tampilan terminal tetap sinkron dengan posisi input di dalam buffer.
+
+#### 1. Boundary Protection (Limit Kursor)
+Fungsi `limitCursorBounds` bertugas menjaga agar kursor tetap berada dalam area yang valid:
+* Kursor tidak diizinkan bergerak melampaui indeks baris yang tersedia (`total_lines`).
+* Kursor dibatasi secara horizontal oleh panjang teks pada baris yang bersangkutan (`line_length`).
+
+#### 2. Navigasi dan Viewport Scrolling
+* **Smart Navigation**: Saat berpindah baris (atas/bawah), jika baris tujuan memiliki panjang yang lebih pendek dari posisi kolom kursor saat ini, kursor secara otomatis akan berpindah ke akhir baris tersebut.
+* **Viewport Scrolling**: Fungsi `adjust_viewport` mendeteksi jika kursor bergerak keluar dari batas vertikal layar terminal. Jika ini terjadi, variabel `view_row_offset` akan diperbarui sehingga tampilan layar bergeser mengikuti pergerakan kursor.
+
+---
+
+### 10. Spesifikasi Teknis Buffer
+
+Implementasi buffer ini memiliki batasan teknis sebagai berikut:
+
+| Komponen | Deskripsi | Batas Maksimal |
+| :--- | :--- | :--- |
+| **Kapasitas Baris** | Jumlah total baris dalam buffer | 100 Baris |
+| **Kapasitas Kolom** | Jumlah total karakter per baris | 100 Karakter |
+| **Tipe Data** | Format penyimpanan karakter | `char` (1 Byte) |
+| **Scrolling** | Mekanisme tampilan | Vertikal (Row-offset) |
+
+---
+
+### 11. Keluar Program (Ctrl+Q)
 
 **Jika ada perubahan belum disimpan:**
 
