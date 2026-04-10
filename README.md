@@ -103,7 +103,9 @@ gcc main.c recovery.c file_io.c buffer.c render.c input.c cursor.c -o app
 ## Contoh Penggunaan
 
 ### 1. Menu Utama
+
 Saat program dibuka, akan tampil menu utama:
+
 ```
 ==================================================
 =========== Saw<git> | Text Editor ===============
@@ -120,6 +122,7 @@ Sawgit>
 Pilih menu dengan menekan angka **1-5** di keyboard.
 
 Jika ada data recovery dari sesi sebelumnya:
+
 ```
 [!] Recovery ditemukan, 5 baris dimuat.
 Tekan sembarang tombol untuk lanjut...
@@ -130,22 +133,28 @@ Program langsung masuk ke editor dengan data sesi sebelumnya.
 ---
 
 ### 2. Open File (Angka 1)
+
 Membuka file teks yang sudah ada di disk:
+
 ```
 [OPEN] Masukkan nama file: catatan.txt
 [INFO] catatan.txt berhasil dibuka. 3 baris dimuat.
 ```
+
 Setelah file terbuka, program langsung masuk ke mode editor.
 
 ---
 
 ### 3. Create File (Angka 2)
+
 Membuat file baru dengan buffer kosong, langsung masuk mode editor.
 
 ---
 
 ### 4. Mode Editor — Shortcut Keyboard
+
 Setelah masuk mode editor, gunakan shortcut berikut:
+
 ```
 Ctrl+S  → Simpan file (Save jika sudah punya nama, Save As jika baru)
 Ctrl+O  → Buka file lain dari dalam editor
@@ -156,34 +165,37 @@ Ctrl+G  → Bantuan shortcut
 ESC     → Kembali ke menu utama
 Panah   → Navigasi kursor
 ```
+
 ---
 
 ### 5. Simpan File (Ctrl+S)
 
 **Jika file sudah punya nama (dari Open):**
+
 ```
 [INFO] Perubahan berhasil disimpan ke file catatan.txt
 Tekan sembarang tombol...
 ```
 
 **Jika file baru (dari Create):**
+
 ```
 [SAVE AS] Masukkan nama file baru: output.txt
 [INFO] Perubahan berhasil disimpan ke file output.txt
 Tekan sembarang tombol...
 ```
 
-Nama file tidak boleh kosong — program akan meminta input ulang.
-
 ---
 
 ### 6. Status Bar
 
 Di bagian bawah editor selalu tampil status terkini:
+
 ```
 [Unsaved Changes] | File: catatan.txt | Baris: 5
 Posisi: Baris 3, Kolom 7 | Ctrl+S: Save | ESC: Menu
 ```
+
 - `[Unsaved Changes]` → ada perubahan yang belum disimpan
 - `[Saved]` → semua perubahan sudah tersimpan ke file
 
@@ -196,6 +208,7 @@ Posisi: Baris 3, Kolom 7 | Ctrl+S: Save | ESC: Menu
 - Saat program dibuka kembali, data dipulihkan otomatis
 
 Contoh saat crash:
+
 ```
 [!] Program diinterupsi. Menyimpan recovery...
 [!] Recovery tersimpan. Program keluar.
@@ -206,11 +219,13 @@ Contoh saat crash:
 ### 8. Keluar Program (Ctrl+Q)
 
 **Jika ada perubahan belum disimpan:**
+
 ```
 [WARNING] Perubahan belum disimpan! Tetap keluar? (y/n):
 ```
 
 **Jika sudah tersimpan:**
+
 ```
 [QUIT] Keluar dari Saw<git>? (y/n):
 ```
@@ -218,6 +233,28 @@ Contoh saat crash:
 Tekan `y` untuk konfirmasi. `recovery.tmp` otomatis dihapus saat keluar normal.
 
 ---
+
+## Daftar Shortcut & Pemrosesan Input (ASCII)
+
+Aplikasi ini menggunakan pustaka conio.h dengan fungsi \_getch() untuk menangkap input secara real-time tanpa menekan Enter. Berikut adalah pemetaan kode ASCII yang digunakan:
+
+- Ctrl + N = 14 (Membuat dokumen baru kosong,handleNewFileAction)
+- Ctrl + O = 15 (Membuka file dari direktori,handleOpenAction)
+- Ctrl + Q = 17 (Keluar dari aplikasi (dengan proteksi),handleExitAction)
+- Ctrl + S = 19 (Menyimpan perubahan (Save / Save As),handleSaveAction)
+- Ctrl + I = 9 (Menampilkan informasi aplikasi,renderInfoScreen)
+- Ctrl + G = 7 (Menampilkan panduan shortcut,renderHelpScreen)
+- ESC = 27 (Kembali ke Menu Utama,is_in_editor = 0)
+- Enter = 13 (Membuat baris baru atau memecah baris, insert_newline)
+- Backspace = 8 (Menghapus karakter di belakang kursor, delete_char)
+
+## Pengaman Data
+
+Program menjamin keamanan data dengan memberikan peringatan [WARNING] pada aksi-aksi destruktif berikut jika variabel is_modified == 1:
+
+- Membuka file lain saat sedang mengedit (Ctrl+O).
+- Membuat file baru saat buffer masih berisi perubahan (Ctrl+N).
+- Keluar dari aplikasi saat data belum tersimpan (Ctrl+Q).
 
 ## Cara Kerja Recovery
 
@@ -233,29 +270,29 @@ Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
 
 ### File Recovery:
 
-| File | Fungsi |
-|------|--------|
+| File           | Fungsi                        |
+| -------------- | ----------------------------- |
 | `recovery.tmp` | File sementara untuk autosave |
-| `recovery.c` | Modul yang mengelola recovery |
-| `recovery.h` | Header file modul recovery |
+| `recovery.c`   | Modul yang mengelola recovery |
+| `recovery.h`   | Header file modul recovery    |
 
 ### Fungsi Recovery:
 
-| Fungsi | Keterangan |
-|--------|------------|
+| Fungsi            | Keterangan                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `checkRecovery()` | Cek dan muat data recovery saat startup. Return `1` jika ditemukan (langsung buka editor), return `0` jika tidak ada (tampilkan menu) |
-| `writeRecovery()` | Simpan isi buffer ke `recovery.tmp` — dipanggil otomatis setiap keystroke |
-| `clearRecovery()` | Hapus `recovery.tmp` saat keluar normal atau setelah save berhasil |
+| `writeRecovery()` | Simpan isi buffer ke `recovery.tmp` — dipanggil otomatis setiap keystroke                                                             |
+| `clearRecovery()` | Hapus `recovery.tmp` saat keluar normal atau setelah save berhasil                                                                    |
 
 ---
 
 # Identitas Tim
 
-| NIM | Nama | ID Github | Manager |
-|-----|------|-----------|---------|
-| 251511056 | Putra Suyapratama | hmzahiqball | Pak Rizki |
-| 251511057 | R. Neysa Rahma Velda | Neysavelda | Pak Rizki |
-| 251511061 | Tania Dwi Pangesti | taniadwip | Pak Rizki |
+| NIM       | Nama                 | ID Github   | Manager   |
+| --------- | -------------------- | ----------- | --------- |
+| 251511056 | Putra Suyapratama    | hmzahiqball | Pak Rizki |
+| 251511057 | R. Neysa Rahma Velda | Neysavelda  | Pak Rizki |
+| 251511061 | Tania Dwi Pangesti   | taniadwip   | Pak Rizki |
 
 ---
 
