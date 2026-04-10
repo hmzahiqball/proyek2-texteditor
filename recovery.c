@@ -45,7 +45,7 @@ int checkRecovery() {
     is_modified = 1 ; // Tandai buffer sebagai sudah dimodifikasi agar user tahu ada data yang dimuat
 
     if (total_lines > 0) {
-        printf("[!] Recovery ditemukan, %d baris dimuat.\n", total_lines);
+        printf("[!] Recovery ditemukan, %d baris dimuat.\n", total_lines); 
         printf("Tekan sembarang tombol untuk lanjut...");
         getch();
     } else {
@@ -66,7 +66,7 @@ void writeRecovery() {
     fprintf(fp, "FILENAME:%s\n", current_filename); // Simpan nama file yang sedang dibuka (jika ada)
 
     for (int i = 0; i < total_lines; i++) {
-        fprintf(fp, "%s\n", text_buffer[i]);
+        fprintf(fp, "%s\n", text_buffer[i]); // Simpan setiap baris teks ke file recovery
     }
     
     fclose(fp); 

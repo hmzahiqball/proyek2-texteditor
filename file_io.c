@@ -10,30 +10,30 @@
 // Deklarasi variabel global untuk status modifikasi dan nama file saat ini
 // Variabel ini akan dipinjam (extern) di render.c
 int is_modified = 0; // 0 = tidak ada perubahan, 1 = ada perubahan
-char current_filename[256] = "Untitled"; // Nama file default saat buat baru
+char current_filename[256] = ""; // Nama file default saat buat baru
 
 // Fungsi untuk menyimpan isi buffer ke dalam file di disk
 void saveToFile(const char *filename) {
     FILE *fp = fopen(filename, "w");
     if (fp == NULL) {
         sprintf(bottom_message, "[ERROR] Gagal menyimpan ke %s", filename);
-        show_message = 1;
+        show_message = 1; // Tampilkan pesan error di status bar
         return;
     }
 
     for (int i = 0; i < total_lines; i++) {
-        fprintf(fp, "%s\n", text_buffer[i]);
+        fprintf(fp, "%s\n", text_buffer[i]); // Tambahkan newline agar format file tetap rapi
     }
 
     fclose(fp);
 
     is_modified = 0;
-    strcpy(current_filename, filename);
+    strcpy(current_filename, filename); // Update nama file saat ini setelah berhasil disimpan
     clearRecovery();
 
-    // 🔥 tampilkan info TANPA printf
+    // Tampilkan pesan sukses di status bar
     sprintf(bottom_message, "[INFO] File berhasil disimpan ke %s", filename);
-    show_message = 1;
+    show_message = 1; // Tampilkan pesan sukses di status bar
 }
 
 // Fungsi untuk membuka file dari disk dan memuatnya ke buffer RAM
@@ -41,7 +41,8 @@ void openFile(const char *filename) {
     FILE *fp = fopen(filename, "r");
     
     if (fp == NULL) {
-        printf("\n[ERROR] File '%s' tidak ditemukan atau tidak bisa dibuka.\n", filename);
+        sprintf(bottom_message, "[ERROR] File '%s' tidak ditemukan atau tidak bisa dibuka.", filename);
+        show_message = 1; // Tampilkan pesan error di status bar
         return;
     }
 
@@ -65,7 +66,7 @@ void openFile(const char *filename) {
     is_modified = 0; 
 
     // 5. Tambahan : Pindahkan kursor ke akhir dokumen
-    set_cursor_to_end();
+    initCursor();
     
     printf("\n[INFO] %s berhasil dibuka. %d baris dimuat.\n", filename, total_lines);
     printf("Tekan sembarang tombol untuk lanjut...");
