@@ -32,7 +32,7 @@ void insert_char(char c);
 void delete_char();
 
 // Delete Karakter Forward (Delete key)
-void delete_char_forward();
+// void delete_char_forward();
 
 // Insert Newline (Enter)
 void insert_newline();
