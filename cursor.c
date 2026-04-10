@@ -3,15 +3,17 @@
 #include "buffer.h"
 #include "render.h"
 
-// Fungsi bantu untuk mengelola posisi kursor di dalam buffer teks.
+// Variabel global untuk posisi cursor
 int cursor_row = 0;
 int cursor_col = 0;
 
+// Inisialisasi cursor ke posisi awal (0,0)
 void initCursor() {
     cursor_row = 0;
     cursor_col = 0;
 }
 
+// Membatasi posisi cursor agar tetap dalam batas buffer
 void limitCursorBounds() {
     if (cursor_row < 0) cursor_row = 0;
 
@@ -31,6 +33,7 @@ void limitCursorBounds() {
     if (cursor_col > len) cursor_col = len;
 }
 
+// Mengatur cursor ke akhir dokumen
 void set_cursor_to_end() {
     if (total_lines > 0) {
         cursor_row = total_lines - 1;
@@ -43,6 +46,7 @@ void set_cursor_to_end() {
     limitCursorBounds();
 }
 
+// Gerakan cursor ke kiri
 void move_left() {
     if (cursor_col > 0) {
         cursor_col--;
@@ -53,6 +57,7 @@ void move_left() {
     adjust_viewport();
 }
 
+// Gerakan cursor ke kanan
 void move_right() {
     int len = getLineLength(cursor_row);
 
@@ -65,6 +70,7 @@ void move_right() {
     adjust_viewport();
 }
 
+// Gerakan cursor ke atas
 void move_up() {
     if (cursor_row > 0) {
         cursor_row--;
@@ -74,6 +80,7 @@ void move_up() {
     adjust_viewport();
 }
 
+// Gerakan cursor ke bawah
 void move_down() {
     if (cursor_row < total_lines - 1) {
         cursor_row++;
@@ -83,6 +90,7 @@ void move_down() {
     adjust_viewport();
 }
 
+// Menyesuaikan viewport berdasarkan posisi cursor
 void adjust_viewport() {
     if (cursor_row < view_row_offset) {
         view_row_offset = cursor_row;
