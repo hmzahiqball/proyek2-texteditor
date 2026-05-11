@@ -22,6 +22,8 @@ void clearBuffer();
 // Penambahan dan pengambilan baris
 void appendLine(const char *input);
 LineNode* getLine(int row);
+void insertLineAt(int row, const char *text);
+void deleteLineAt(int row);
 
 // Manipulasi karakter
 void insert_char(char c);

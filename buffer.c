@@ -88,6 +88,101 @@ void appendLine(const char *input) {
     total_lines++;
 }
 
+void insertLineAt(int row, const char *text) {
+    // Validasi row
+    if (row < 0 || row > total_lines)
+        return;
+
+    // Buat node baru
+    LineNode *newNode;
+
+    newNode = (LineNode*) malloc(sizeof(LineNode));
+
+    if (newNode == NULL)
+        return;
+
+    strncpy(newNode->line, text, MAX_COL - 1);
+    newNode->line[MAX_COL - 1] = '\0';
+
+    newNode->prev = NULL;
+    newNode->next = NULL;
+
+    // List kosong
+    if (head == NULL) {
+        head = newNode;
+        tail = newNode;
+    }
+
+    // Insert di awal
+    else if (row == 0) {
+        newNode->next = head;
+        head->prev = newNode;
+        head = newNode;
+    }
+
+    // Insert di akhir
+    else if (row == total_lines) {
+        tail->next = newNode;
+        newNode->prev = tail;
+        tail = newNode;
+    }
+
+    // Insert di tengah
+    else {
+        LineNode *current = getLine(row);
+        LineNode *before = current->prev;
+
+        // Sambung kiri
+        before->next = newNode;
+        newNode->prev = before;
+
+        // Sambung kanan
+        newNode->next = current;
+        current->prev = newNode;
+    }
+
+    total_lines++;
+}
+
+void deleteLineAt(int row) {
+    // Validasi
+    if (row < 0 || row >= total_lines)
+        return;
+
+    LineNode *current = getLine(row);
+
+    if (current == NULL)
+        return;
+
+    // Hanya 1 node
+    if (head == tail) {
+        head = NULL;
+        tail = NULL;
+    }
+
+    // Delete head
+    else if (current == head) {
+        head = current->next;
+        head->prev = NULL;
+    }
+
+    // Delete tail
+    else if (current == tail) {
+        tail = current->prev;
+        tail->next = NULL;
+    }
+
+    // Delete tengah
+    else {
+        current->prev->next = current->next;
+        current->next->prev = current->prev;
+    }
+
+    // Free memory
+    free(current);
+    total_lines--;
+}
+
 // Insert Character
 void insert_char(char c) {
     LineNode *current = getLine(cursor_row);
@@ -96,6 +191,9 @@ void insert_char(char c) {
         return;
 
     int len = strlen(current->line);
+
+    if (cursor_col < 0 || cursor_col > len)
+        return;
 
     // Buffer line penuh
     if (len >= MAX_COL - 1)
@@ -118,11 +216,10 @@ void insert_char(char c) {
 // Delete karakter (Backspace)
 void delete_char() {
     LineNode *current = getLine(cursor_row);
-
     if (current == NULL)
         return;
 
-    // Hapus karakter biasa
+    // Backspace biasa
     if (cursor_col > 0) {
         int len = strlen(current->line);
         memmove(
@@ -133,29 +230,22 @@ void delete_char() {
         cursor_col--;
     }
 
-    // Merge line dengan line sebelumnya
+    // Merge line
     else if (current->prev != NULL) {
         LineNode *prev = current->prev;
         int prev_len = strlen(prev->line);
 
-        // Cek overflow
+        // Cegah overflow
         if (prev_len + strlen(current->line) < MAX_COL) {
-
+            // Gabung isi line
             strcat(prev->line, current->line);
+            deleteLineAt(cursor_row);
+            cursor_row--;
+            cursor_col = prev_len;
         }
 
-        // Sambungkan node
-        prev->next = current->next;
-
-        if (current->next != NULL) {
-            current->next->prev = prev;
-        }
-        else {
-            tail = prev;
-        }
-
-        free(current);
-        total_lines--;
+        // Delete current line
+        deleteLineAt(cursor_row);
         cursor_row--;
         cursor_col = prev_len;
     }
@@ -166,40 +256,26 @@ void delete_char() {
 // Menambahkan newline
 void insert_newline() {
     LineNode *current = getLine(cursor_row);
-
     if (current == NULL)
         return;
 
-    LineNode *newNode;
-
-    newNode = (LineNode*) malloc(sizeof(LineNode));
-
-    if (newNode == NULL)
-        return;
+    char newLineText[MAX_COL];
 
     // Copy teks setelah cursor
     strcpy(
-        newNode->line,
+        newLineText,
         &current->line[cursor_col]
     );
 
     // Potong line lama
     current->line[cursor_col] = '\0';
 
-    // Set pointer node baru
-    newNode->prev = current;
-    newNode->next = current->next;
+    // Insert line baru
+    insertLineAt(
+        cursor_row + 1,
+        newLineText
+    );
 
-    // Kalau ada next
-    if (current->next != NULL) {
-        current->next->prev = newNode;
-    }
-    else {
-        tail = newNode;
-    }
-
-    current->next = newNode;
-    total_lines++;
     cursor_row++;
     cursor_col = 0;
 
