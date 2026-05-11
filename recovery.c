@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <conio.h>
+#include <time.h>
 #include "recovery.h"
 #include "buffer.h"
 #include "cursor.h"
 
 #define RECOVERY_FILE "recovery.tmp"
+
+// Variabel untuk melacak waktu terakhir kali file recovery disimpan
+time_t last_recovery_time = 0;
 extern char current_filename[256];
 extern int is_modified; // Status modifikasi buffer, dipinjam dari file_io.c
 
@@ -57,22 +61,28 @@ int checkRecovery() {
 
 // Menyimpan isi buffer saat ini ke file recovery.tmp untuk pemulihan sesi.
 void writeRecovery() {
-    // PROTEKSI: Jangan tulis kalau buffer kosong (total_lines == 0)
-    // Kecuali kalau memang user sengaja mengosongkan semua teks.
-    if (total_lines == 0) return; // Tidak perlu buat file recovery kalau tidak ada data untuk disimpan
+    // Cek waktu dan akan skip kalau belum 2 detik
+    time_t now = time(NULL);
+    if (difftime(now, last_recovery_time) < 2.0) {
+        return;
+    }
+    last_recovery_time = now;  // update waktu terakhir
 
-    FILE *fp = fopen("recovery_new.tmp", "w"); 
+    // Proteksi buffer kosong
+    if (total_lines == 0) return;
+
+    FILE *fp = fopen("recovery_new.tmp", "w");
     if (fp == NULL) return;
-    fprintf(fp, "FILENAME:%s\n", current_filename); // Simpan nama file yang sedang dibuka (jika ada)
+    fprintf(fp, "FILENAME:%s\n", current_filename);
 
-    for (int i = 0; i < total_lines; i++) {
-        fprintf(fp, "%s\n", text_buffer[i]); // Simpan setiap baris teks ke file recovery
+    int i;
+    for (i = 0; i < total_lines; i++) {
+        fprintf(fp, "%s\n", text_buffer[i]);
     }
     
-    fclose(fp); 
-
-    remove(RECOVERY_FILE); // Hapus file recovery lama
-    rename("recovery_new.tmp", RECOVERY_FILE); // Ganti nama file baru ke recovery.tmp
+    fclose(fp);
+    remove(RECOVERY_FILE);
+    rename("recovery_new.tmp", RECOVERY_FILE);
 }
 
 // Menghapus file recovery saat exit normal
