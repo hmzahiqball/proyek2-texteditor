@@ -5,6 +5,7 @@
 extern int is_modified;
 extern char current_filename[256];
 
+int isFileExists(const char *filename);
 // Menyimpan isi buffer ke file .txt
 void saveToFile(const char *filename);
 

@@ -105,47 +105,44 @@ void handleNewFileAction()
     handleEditInput("");       // Masuk ke mode editor dengan parameter file kosong
 }
 
-// Menangani penyimpanan buffer ke dalam file fisik di disk
-void handleSaveAction()
-{	// Cek apakah file sudah punya nama (bukan "Untitled")
-	if (strlen(current_filename) > 0 && strcmp(current_filename, "Untitled") != 0) 
-	{
-        saveToFile(current_filename);
+// 1. Fungsi Save As: Selalu minta nama dan cek duplikasi
+void handleSaveAsAction() {
+    char temp_name[256];
+    input_mode = 1; // Kursor pindah ke area pesan (Tania's part)
+    strcpy(bottom_message, "[SAVE AS] Masukkan nama file baru: ");
+    show_message = 1;
+    renderScreen(text_buffer, total_lines);
 
-        sprintf(bottom_message, "[INFO] Perubahan berhasil disimpan ke file %s", current_filename);
-        show_message = 1;
-    } 
-    // Jika file masih Untitled, lakukan prosedur "Save As"
-	else 
-	{
-        input_mode = 1;
-        // tampilkan SAVE AS di UI
-        strcpy(bottom_message, "[SAVE AS] Masukkan nama file baru: ");
-        show_message = 1;
-        renderScreen(text_buffer, total_lines);
-
-        // input nama file dari user
-        fgets(current_filename, sizeof(current_filename), stdin);
-        current_filename[strcspn(current_filename, "\n")] = 0;
-
-        input_mode = 0;
-		
-		//nama file valid (tidak kosong), disimpan ke disk
-        if (strlen(current_filename) > 0) 
-		{
-            saveToFile(current_filename);
-
-            sprintf(bottom_message, "[INFO] Perubahan berhasil disimpan ke file %s", current_filename);
-            show_message = 1;
+    if (fgets(temp_name, sizeof(temp_name), stdin) != NULL) {
+        temp_name[strcspn(temp_name, "\n")] = 0;
+        
+        if (strlen(temp_name) > 0) {
+            // Validasi keberadaan file
+            if (isFileExists(temp_name)) {
+                strcpy(bottom_message, "[WARNING] File sudah ada! Timpa? (y/n): ");
+                renderScreen(text_buffer, total_lines);
+                if (_getch() != 'y') {
+                    strcpy(bottom_message, "[BATAL] Penyimpanan dibatalkan.");
+                    input_mode = 0;
+                    return;
+                }
+            }
+            saveToFile(temp_name);
+            strcpy(current_filename, temp_name);
         }
     }
+    input_mode = 0;
+    show_message = 0;
+}
 
-    // tampilkan pesan + jeda
-    strcat(bottom_message, "\nTekan sembarang tombol...");
-    renderScreen(text_buffer, total_lines);
-    _getch();
-
-    show_message = 0; //Membersihakan baris pesan setelah user menenkan tombol
+// 2. Fungsi Save: Update file aktif atau lempar ke Save As jika Untitled
+void handleSaveAction() 
+{
+    if (strcmp(current_filename, "Untitled") == 0 || strlen(current_filename) == 0) {
+        handleSaveAsAction();
+    } else {
+        saveToFile(current_filename);
+    }
 }
 
 //Menangani penutupan program
@@ -246,10 +243,14 @@ void handleEditInput(char *filename)
             renderInfoScreen();
             _getch();
         }
-        else if (c == 19) //Ctrl + S (save/Save As)
+        else if (c == 19) // Ctrl + S
 		{ 
-            handleSaveAction();
-        }       
+		    handleSaveAction(); // Sekarang panggil fungsi update
+		}
+		else if (c == 1) // Misal Ctrl + A (Save As)
+		{
+		    handleSaveAsAction(); 
+		}     
         else if (c == 8)  // Backspace
 		{ 
             delete_char();

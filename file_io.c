@@ -12,6 +12,16 @@
 int is_modified = 0; // 0 = tidak ada perubahan, 1 = ada perubahan
 char current_filename[256] = ""; // Nama file default saat buat baru
 
+int isFileExists(const char *filename) {
+    FILE *fp = fopen(filename, "r");
+    if (fp) {
+        fclose(fp);
+        return 1; // File sudah ada
+    }
+    return 0; // File belum ada
+}
+
+
 // Fungsi untuk menyimpan isi buffer ke dalam file di disk
 void saveToFile(const char *filename) {
     FILE *fp = fopen(filename, "w");
@@ -20,8 +30,8 @@ void saveToFile(const char *filename) {
         show_message = 1; // Tampilkan pesan error di status bar
         return;
     }
-
-    for (int i = 0; i < total_lines; i++) {
+	int i;
+    for ( i = 0; i < total_lines; i++) {
         fprintf(fp, "%s\n", text_buffer[i]); // Tambahkan newline agar format file tetap rapi
     }
 
