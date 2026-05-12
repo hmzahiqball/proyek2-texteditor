@@ -1,10 +1,10 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#define MAX_COL 100
-
 typedef struct LineNode {
-    char line[MAX_COL];
+    char *line;      // dynamic string
+    int length;      // panjang isi
+    int capacity;    // kapasitas allocated
 
     struct LineNode *prev;
     struct LineNode *next;

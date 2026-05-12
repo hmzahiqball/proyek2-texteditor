@@ -5,10 +5,24 @@
 #include "buffer.h"
 #include "cursor.h"
 
+#define INITIAL_CAPACITY 16
+
 LineNode *head = NULL;
 LineNode *tail = NULL;
 
 int total_lines = 0;
+
+// Memastikan kapasitas line cukup
+void ensureCapacity(LineNode *node, int needed) {
+    if (needed >= node->capacity) {
+
+        while (needed >= node->capacity) {
+            node->capacity *= 2;
+        }
+
+        node->line = (char*) realloc(node->line, node->capacity);
+    }
+}
 
 // Ambil node berdasarkan row
 LineNode* getLine(int row) {
@@ -46,6 +60,7 @@ void clearBuffer() {
 
         current = current->next;
 
+        free(temp->line);
         free(temp);
     }
 
@@ -66,9 +81,12 @@ void appendLine(const char *input) {
     if (newNode == NULL)
         return;
 
-    strncpy(newNode->line, input, MAX_COL - 1);
+    newNode->length = strlen(input);
+    newNode->capacity = newNode->length + INITIAL_CAPACITY;
 
-    newNode->line[MAX_COL - 1] = '\0';
+    newNode->line = (char*) malloc(newNode->capacity);
+
+    strcpy(newNode->line, input);
 
     newNode->prev = NULL;
     newNode->next = NULL;
@@ -85,6 +103,7 @@ void appendLine(const char *input) {
 
         tail = newNode;
     }
+
     total_lines++;
 }
 
@@ -101,8 +120,12 @@ void insertLineAt(int row, const char *text) {
     if (newNode == NULL)
         return;
 
-    strncpy(newNode->line, text, MAX_COL - 1);
-    newNode->line[MAX_COL - 1] = '\0';
+    newNode->length = strlen(text);
+    newNode->capacity = newNode->length + INITIAL_CAPACITY;
+
+    newNode->line = (char*) malloc(newNode->capacity);
+
+    strcpy(newNode->line, text);
 
     newNode->prev = NULL;
     newNode->next = NULL;
@@ -178,8 +201,9 @@ void deleteLineAt(int row) {
         current->next->prev = current->prev;
     }
 
-    // Free memory
+    free(current->line);
     free(current);
+
     total_lines--;
 }
 
@@ -190,23 +214,22 @@ void insert_char(char c) {
     if (current == NULL)
         return;
 
-    int len = strlen(current->line);
-
-    if (cursor_col < 0 || cursor_col > len)
+    if (cursor_col < 0 || cursor_col > current->length)
         return;
 
-    // Buffer line penuh
-    if (len >= MAX_COL - 1)
-        return;
+    ensureCapacity(current, current->length + 2);
 
     // Geser karakter ke kanan
     memmove(
         &current->line[cursor_col + 1],
         &current->line[cursor_col],
-        len - cursor_col + 1
+        current->length - cursor_col + 1
     );
 
     current->line[cursor_col] = c;
+
+    current->length++;
+
     cursor_col++;
 
     limitCursorBounds();
@@ -216,39 +239,46 @@ void insert_char(char c) {
 // Delete karakter (Backspace)
 void delete_char() {
     LineNode *current = getLine(cursor_row);
+
     if (current == NULL)
         return;
 
     // Backspace biasa
     if (cursor_col > 0) {
-        int len = strlen(current->line);
+
         memmove(
             &current->line[cursor_col - 1],
             &current->line[cursor_col],
-            len - cursor_col + 1
+            current->length - cursor_col + 1
         );
+
+        current->length--;
+
         cursor_col--;
     }
 
     // Merge line
     else if (current->prev != NULL) {
+
         LineNode *prev = current->prev;
-        int prev_len = strlen(prev->line);
 
-        // Cegah overflow
-        if (prev_len + strlen(current->line) < MAX_COL) {
-            // Gabung isi line
-            strcat(prev->line, current->line);
-            deleteLineAt(cursor_row);
-            cursor_row--;
-            cursor_col = prev_len;
-        }
+        int prev_len = prev->length;
 
-        // Delete current line
+        ensureCapacity(
+            prev,
+            prev->length + current->length + 1
+        );
+
+        strcat(prev->line, current->line);
+
+        prev->length += current->length;
+
         deleteLineAt(cursor_row);
+
         cursor_row--;
         cursor_col = prev_len;
     }
+
     limitCursorBounds();
     adjust_viewport();
 }
@@ -256,12 +286,16 @@ void delete_char() {
 // Menambahkan newline
 void insert_newline() {
     LineNode *current = getLine(cursor_row);
+
     if (current == NULL)
         return;
 
-    char newLineText[MAX_COL];
+    char *newLineText;
 
-    // Copy teks setelah cursor
+    newLineText = (char*) malloc(
+        current->length - cursor_col + 1
+    );
+
     strcpy(
         newLineText,
         &current->line[cursor_col]
@@ -270,11 +304,15 @@ void insert_newline() {
     // Potong line lama
     current->line[cursor_col] = '\0';
 
+    current->length = cursor_col;
+
     // Insert line baru
     insertLineAt(
         cursor_row + 1,
         newLineText
     );
+
+    free(newLineText);
 
     cursor_row++;
     cursor_col = 0;
@@ -286,10 +324,11 @@ void insert_newline() {
 // Mendapatkan panjang line
 int getLineLength(int row) {
     LineNode *current = getLine(row);
+
     if (current == NULL)
         return 0;
 
-    return strlen(current->line);
+    return current->length;
 }
 
 // Mendapatkan karakter pada posisi tertentu
@@ -299,9 +338,7 @@ char getCharAt(int row, int col) {
     if (current == NULL)
         return '\0';
 
-    int len = strlen(current->line);
-
-    if (col < 0 || col >= len)
+    if (col < 0 || col >= current->length)
         return '\0';
 
     return current->line[col];
