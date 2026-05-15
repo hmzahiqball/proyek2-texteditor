@@ -25,60 +25,64 @@ int isFileExists(const char *filename) {
 // Fungsi untuk menyimpan isi buffer ke dalam file di disk
 void saveToFile(const char *filename) {
     FILE *fp = fopen(filename, "w");
+
     if (fp == NULL) {
         sprintf(bottom_message, "[ERROR] Gagal menyimpan ke %s", filename);
-        show_message = 1; // Tampilkan pesan error di status bar
+        show_message = 1;
         return;
     }
-	int i;
-    for ( i = 0; i < total_lines; i++) {
-        fprintf(fp, "%s\n", text_buffer[i]); // Tambahkan newline agar format file tetap rapi
+    LineNode *current = head;
+
+    while (current != NULL) {
+        fprintf(fp, "%s\n", current->line);
+        current = current->next;
     }
 
     fclose(fp);
 
     is_modified = 0;
-    strcpy(current_filename, filename); // Update nama file saat ini setelah berhasil disimpan
+    strcpy(current_filename, filename);
+
     clearRecovery();
 
-    // Tampilkan pesan sukses di status bar
     sprintf(bottom_message, "[INFO] File berhasil disimpan ke %s", filename);
-    show_message = 1; // Tampilkan pesan sukses di status bar
+    show_message = 1;
 }
 
 // Fungsi untuk membuka file dari disk dan memuatnya ke buffer RAM
 void openFile(const char *filename) {
     FILE *fp = fopen(filename, "r");
-    
+
     if (fp == NULL) {
-        sprintf(bottom_message, "[ERROR] File '%s' tidak ditemukan atau tidak bisa dibuka.", filename);
-        show_message = 1; // Tampilkan pesan error di status bar
+        sprintf(bottom_message, "[ERROR] File '%s' tidak ditemukan.", filename);
+        show_message = 1;
         return;
     }
 
-    // 1. Bersihkan buffer lama sebelum memuat data baru
+    // Bersihkan buffer lama
     clearBuffer();
-    
-    // 2. Simpan nama file yang sedang dibuka
-    strcpy(current_filename, filename); 
 
-    // 3. Baca isi file baris demi baris
-    char line[MAX_COL];
+    strcpy(current_filename, filename);
+
+    // Buffer baca (dibesarkan biar aman)
+    char line[1024];
+
     while (fgets(line, sizeof(line), fp) != NULL) {
-        // Bug Fix: Hapus karakter newline agar tampilan editor tidak berantakan
+
+        // Hapus newline
         line[strcspn(line, "\r\n")] = 0;
+
+        // Masukkan ke linked list
         appendLine(line);
     }
 
     fclose(fp);
 
-    // 4. Update status (Baru buka = belum ada perubahan)
-    is_modified = 0; 
+    is_modified = 0;
 
-    // 5. Tambahan : Pindahkan kursor ke akhir dokumen
+    // Reset cursor
     initCursor();
-    
-    printf("\n[INFO] %s berhasil dibuka. %d baris dimuat.\n", filename, total_lines);
-    printf("Tekan sembarang tombol untuk lanjut...");
-    getch();
+
+    sprintf(bottom_message, "[INFO] File '%s' berhasil dibuka (%d baris)", filename, total_lines);
+    show_message = 1;
 }
