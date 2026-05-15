@@ -1,9 +1,12 @@
+#include "buffer.h"
+
 #ifndef CURSOR_H
 #define CURSOR_H
 
 // Variabel global untuk posisi cursor
 extern int cursor_row;
 extern int cursor_col;
+extern LineNode *current_line; // pointer ke line saat ini
 
 // Inisialisasi cursor ke posisi awal (0,0)
 void initCursor();
