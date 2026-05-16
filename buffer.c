@@ -20,7 +20,11 @@ void ensureCapacity(LineNode *node, int needed) {
             node->capacity *= 2;
         }
 
-        node->line = (char*) realloc(node->line, node->capacity);
+        char *tmp = (char*) realloc(node->line, node->capacity);
+        if (tmp == NULL) {
+            return;
+        }
+        node->line = tmp;
     }
 }
 
@@ -173,41 +177,46 @@ void deleteLineAt(int row) {
         return;
 
     LineNode *current = getLine(row);
+    /* ensure global current_line follows the node we modify */
+    current_line = current;
 
-    if (current == NULL)
-        return;
+    // Backspace biasa: hapus karakter sebelum cursor
+    if (cursor_col > 0) {
 
-    // Hanya 1 node
-    if (head == tail) {
-        head = NULL;
-        tail = NULL;
+        memmove(
+            current->line + cursor_col - 1,
+            current->line + cursor_col,
+            (size_t)(current->length - cursor_col + 1)
+        );
+
+        current->length--;
+
+        cursor_col--;
     }
 
-    // Delete head
-    else if (current == head) {
-        head = current->next;
-        head->prev = NULL;
+    // Merge line ke sebelumnya saat cursor di kolom 0
+    else if (current->prev != NULL) {
+
+        LineNode *prev = current->prev;
+
+        int prev_len = prev->length;
+
+        ensureCapacity(prev, prev->length + current->length + 1);
+
+        /* Append current->line ke akhir prev secara langsung */
+        memcpy(prev->line + prev->length, current->line, (size_t)current->length + 1);
+
+        prev->length += current->length;
+
+        /* Hapus node current dan set current_line ke prev agar konsisten */
+        deleteLineAt(cursor_row);
+
+        current_line = prev;
+        cursor_row--;
+        cursor_col = prev_len;
     }
-
-    // Delete tail
-    else if (current == tail) {
-        tail = current->prev;
-        tail->next = NULL;
-    }
-
-    // Delete tengah
-    else {
-        current->prev->next = current->next;
-        current->next->prev = current->prev;
-    }
-
-    free(current->line);
-    free(current);
-
-    total_lines--;
 }
 
-// Insert Character
 void insert_char(char c) {
     LineNode *current = getLine(cursor_row);
 
@@ -217,17 +226,19 @@ void insert_char(char c) {
     if (cursor_col < 0 || cursor_col > current->length)
         return;
 
+    /* make sure global current_line stays in sync with the row we operate on */
+    current_line = current;
+
     ensureCapacity(current, current->length + 2);
 
-    // Geser karakter ke kanan
+    /* shift characters (including terminating '\0') to the right */
     memmove(
-        &current->line[cursor_col + 1],
-        &current->line[cursor_col],
-        current->length - cursor_col + 1
+        current->line + cursor_col + 1,
+        current->line + cursor_col,
+        (size_t)(current->length - cursor_col + 1)
     );
 
     current->line[cursor_col] = c;
-
     current->length++;
 
     cursor_col++;
@@ -275,6 +286,8 @@ void delete_char() {
 
         deleteLineAt(cursor_row);
 
+        current_line = prev;
+
         cursor_row--;
         cursor_col = prev_len;
     }
@@ -311,6 +324,8 @@ void insert_newline() {
         cursor_row + 1,
         newLineText
     );
+
+    current_line = current->next;
 
     free(newLineText);
 
