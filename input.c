@@ -14,6 +14,11 @@ int is_in_editor = 0;
 // Fungsi pembantu untuk menandai adanya perubahan pada dokumen
 void markAsModified() {
     is_modified = 1; // Mengubah status file menjadi belum disimpan (unsaved)
+    
+    //Bersihkan notifikasi lama begitu user mengetik karakter baru
+    show_message = 0; 
+    strcpy(bottom_message, ""); 
+    
     writeRecovery(); // Mencadangkan perubahan ke file sementara (autosave)
 }
 
@@ -77,34 +82,52 @@ void handleOpenAction() {
 // Menangani aksi membuat file baru
 void handleNewFileAction() 
 {
-    // 1. pengamanan data jika user sedang mengedit file lain
     if (is_in_editor == 1) 
-	{
+    {
         if (is_modified == 1) 
-		{
+        {
             strcpy(bottom_message, "[WARNING] Perubahan belum disimpan! Buat file baru? (y/n): ");
+            show_message = 1;
+            
+            // Render layar untuk memunculkan warning dan mengunci posisi kursor bawah
+            renderScreen(NULL, total_lines);
+
+            int konfirmasi = _getch(); 
+            if (konfirmasi != 'y' && konfirmasi != 'Y') {
+                show_message = 0;
+                strcpy(bottom_message, "");
+                renderScreen(NULL, total_lines); // Gambar ulang untuk membersihkan teks warning
+                return; // Batal membuat file baru
+            }
         } 
-		else 
-		{
+        else 
+        {
             strcpy(bottom_message, "[NEW FILE] Buat file baru? (y/n): ");
+            show_message = 1;
+            renderScreen(NULL, total_lines);
+            
+            int konfirmasi = _getch();
+            if (konfirmasi != 'y' && konfirmasi != 'Y') {
+                show_message = 0;
+                strcpy(bottom_message, "");
+                renderScreen(NULL, total_lines);
+                return;
+            }
         }
         
-        show_message = 1;
-        renderScreen(NULL, total_lines);
-
-        if (_getch() != 'y') {
-            show_message = 0;
-            return; // Batal membuat file baru
-        }
+        // Bersihkan pesan setelah user setuju membuat berkas baru
         show_message = 0;
+        strcpy(bottom_message, "");
     }
 
-    // 2. Alur pembuatan file baru 
-    clearBuffer();             // Mengosongkan buffer dari sisa teks lama
-    initCursor();              // Mengembalikan kursor ke posisi Baris 1, Kolom 1
-    strcpy(current_filename, "Untitled"); // Beri nama default dokumen
-    is_modified = 0;           // Status baru: belum ada yang perlu disimpan
-    handleEditInput("");       // Masuk ke mode editor dengan parameter file kosong
+    // Alur pembuatan file baru
+    clearBuffer();                        
+    initCursor();                         
+    strcpy(current_filename, "Untitled"); 
+    is_modified = 0;                      
+    
+    renderScreen(NULL, total_lines);      
+    handleEditInput("");                  
 }
 
 // 1. Fungsi Save As: Selalu minta nama dan cek duplikasi

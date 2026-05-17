@@ -72,7 +72,7 @@ void renderHelpScreen()
 // Fungsi utama untuk menggambar ulang seluruh tampilan editor ke layar terminal
 void renderScreen(void *unused_buffer, int unused_rows) 
 {
-    // ANTI-FLICKER: Pindahkan kursor ke pojok kiri atas (1,1) tanpa system("cls")
+    
     printf("\033[H"); 
 
     // TRAVERSE DLL: Cari node awal berdasarkan scroll saat ini (Menggunakan WHILE)
@@ -98,7 +98,7 @@ void renderScreen(void *unused_buffer, int unused_rows)
     while (printed_lines < SCREEN_HEIGHT) 
     {
         printf("\033[K\n");
-        printed_lines++;
+        printed_lines++; // FIX: Tambahkan ini agar nilai printed_lines mencapai SCREEN_HEIGHT (20)
     }
 
     // STATUS BAR
@@ -111,7 +111,7 @@ void renderScreen(void *unused_buffer, int unused_rows)
     {
         printf("[Saved] | File: %s | Total Baris: %d\033[K\n", current_filename, total_lines);
     }
-    printf("-------------------------------------------------------\n");
+    printf("--------------------------------------------------\033[K\n");
     
     printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | Ctrl+A: Save As | ESC: Menu\033[K\n", 
        cursor_row + 1, cursor_col + 1);
@@ -128,20 +128,20 @@ void renderScreen(void *unused_buffer, int unused_rows)
     // PENEMPATAN KURSOR TERMINAL SECARA DINAMIS
     if (input_mode) 
     {
-        // Posisikan kursor tepat di ujung pesan prompt input bawah
-        int msg_line = printed_lines + 7; 
+        // Kunci koordinat baris prompt di terminal (SCREEN_HEIGHT + 6 baris komponen status bar)
+        int msg_line = SCREEN_HEIGHT + 6; 
+        
         char *last_line = strrchr(bottom_message, '\n');
         int col = last_line ? strlen(last_line + 1) + 1 : strlen(bottom_message) + 1;
         
-        // Geser kursor terminal fisik ke baris input bawah
+        // Pindahkan kursor fisik terminal ke ujung prompt input nama file di bawah
         printf("\033[%d;%dH", msg_line, col);
     } 
     else 
     {
-        // Pastikan kursor terminal kembali ke posisi teks editor utama saat mengetik biasa
+        // Kembalikan kursor terminal ke posisi teks editor utama saat mode mengetik biasa
         printf("\033[%d;%dH", cursor_row - view_row_offset + 1, cursor_col + 1);
     }
 
-    // 7. DOUBLE-BUFFERING TRICK: Pastikan semua perintah kursor di atas dieksekusi secara instan
-    fflush(stdout); 
+    fflush(stdout); // Paksa seluruh buffer karakter keluar bersamaan ke layar terminal
 }
