@@ -9,6 +9,8 @@
 #include "file_io.h"
 #include "recovery.h"
 
+int is_in_editor = 0;
+
 // Fungsi pembantu untuk menandai adanya perubahan pada dokumen
 void markAsModified() {
     is_modified = 1; // Mengubah status file menjadi belum disimpan (unsaved)
@@ -17,7 +19,7 @@ void markAsModified() {
 
 // Menangani aksi membuka file
 void handleOpenAction() {
-    // 1. Jika sedang berada di dalam layar editor (is_in_editor == 1
+    // 1. Jika sedang berada di dalam layar editor
     if (is_in_editor == 1) 
 	{
         // Cek status modifikasi untuk memberikan peringatan pengamanan data
@@ -31,7 +33,7 @@ void handleOpenAction() {
         }
         
         show_message = 1;
-        renderScreen(text_buffer, total_lines);
+        renderScreen(NULL, total_lines);
 
         // Jika user batal (tidak tekan 'y'), kembali ke editor
         if (_getch() != 'y') {
@@ -41,12 +43,12 @@ void handleOpenAction() {
     
         input_mode = 1; // Aktifkan mode input kursor untuk mengetik nama file
         strcpy(bottom_message, "[OPEN] Masukkan nama file: ");
-        renderScreen(text_buffer, total_lines); // Render ulang layar agar kursor pindah ke bawah
+        renderScreen(NULL, total_lines); // Render ulang layar agar kursor pindah ke bawah
     } 
     // 2. Jika dipanggil dari Menu Utama (pilihan nomor 1)
     else 
 	{
-                printf("\n[OPEN] Masukkan nama file: "); 
+        printf("\n[OPEN] Masukkan nama file: "); 
         fflush(stdout); // Memastikan teks muncul sebelum fgets dijalankan
     }
 
@@ -62,7 +64,7 @@ void handleOpenAction() {
         // Jika nama file tidak kosong, muat file dan masuk ke editor
         if (strlen(filename) > 0) 
 		{
-            openFile(filename);      // Membuka dan memuat isi file ke text_buffer
+            openFile(filename);      // Membuka dan memuat isi file ke buffer
             handleEditInput(filename); // Pindah ke loop utama editor
         }
     }
@@ -88,7 +90,7 @@ void handleNewFileAction()
         }
         
         show_message = 1;
-        renderScreen(text_buffer, total_lines);
+        renderScreen(NULL, total_lines);
 
         if (_getch() != 'y') {
             show_message = 0;
@@ -98,7 +100,7 @@ void handleNewFileAction()
     }
 
     // 2. Alur pembuatan file baru 
-   clearBuffer();             // Mengosongkan text_buffer dari sisa teks lama
+    clearBuffer();             // Mengosongkan buffer dari sisa teks lama
     initCursor();              // Mengembalikan kursor ke posisi Baris 1, Kolom 1
     strcpy(current_filename, "Untitled"); // Beri nama default dokumen
     is_modified = 0;           // Status baru: belum ada yang perlu disimpan
@@ -108,10 +110,10 @@ void handleNewFileAction()
 // 1. Fungsi Save As: Selalu minta nama dan cek duplikasi
 void handleSaveAsAction() {
     char temp_name[256];
-    input_mode = 1; // Kursor pindah ke area pesan (Tania's part)
+    input_mode = 1; // Kursor pindah ke area pesan
     strcpy(bottom_message, "[SAVE AS] Masukkan nama file baru: ");
     show_message = 1;
-    renderScreen(text_buffer, total_lines);
+    renderScreen(NULL, total_lines);
 
     if (fgets(temp_name, sizeof(temp_name), stdin) != NULL) {
         temp_name[strcspn(temp_name, "\n")] = 0;
@@ -120,7 +122,7 @@ void handleSaveAsAction() {
             // Validasi keberadaan file
             if (isFileExists(temp_name)) {
                 strcpy(bottom_message, "[WARNING] File sudah ada! Timpa? (y/n): ");
-                renderScreen(text_buffer, total_lines);
+                renderScreen(NULL, total_lines);
                 if (_getch() != 'y') {
                     strcpy(bottom_message, "[BATAL] Penyimpanan dibatalkan.");
                     input_mode = 0;
@@ -162,7 +164,7 @@ void handleExitAction()
             strcpy(bottom_message, "[QUIT] Keluar dari Saw<git>? (y/n): ");
         }
         show_message = 1;
-        renderScreen(text_buffer, total_lines);
+        renderScreen(NULL, total_lines);
     } 
 	else 
 	//Jika keluar dari menu utama
@@ -187,16 +189,15 @@ void handleEditInput(char *filename)
 {
 	is_in_editor = 1; //Menandai status bahwa user sedang dalam mode edit
 	
-    if (total_lines == 0) total_lines = 1; //Minimal editor punay 1 baris
-    extern char current_filename[256]; //Akses variabel global
+    if (total_lines == 0) total_lines = 1; //Minimal editor punya 1 baris
     strcpy(current_filename, filename); // set nama file yang sedang aktif dikerjakan
 
     while (1) 
 	{
-        renderScreen(text_buffer, total_lines);
+        renderScreen(NULL, total_lines);
         int c = _getch();
         
-        if (c == 27) // ESC (Kembali ke menu utma)
+        if (c == 27) // ESC (Kembali ke menu utama)
 		{
         	is_in_editor = 0;
         	break; 	
@@ -263,7 +264,7 @@ void handleEditInput(char *filename)
         } 
         else if (c >= 32 && c <= 126) //Pengetikan karakter standar (huruf, angka, simbol)
 		{ 
-            insert_char((char)c); //Memasukan karakter ke posisi kursor di text_buffer
+            insert_char((char)c); //Memasukan karakter ke posisi kursor
             markAsModified(); 
         }
     }
