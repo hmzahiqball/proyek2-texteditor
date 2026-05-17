@@ -1,44 +1,43 @@
 #include <stdio.h>
 #include <string.h>
-#include <conio.h>
 #include <time.h>
+#include <conio.h>
 #include "recovery.h"
 #include "buffer.h"
 #include "cursor.h"
 
 #define RECOVERY_FILE "recovery.tmp"
 
-// Variabel untuk melacak waktu terakhir kali file recovery disimpan
-time_t last_recovery_time = 0;
 extern char current_filename[256];
-extern int is_modified; // Status modifikasi buffer, dipinjam dari file_io.c
+extern int is_modified;
+
+// Tracking waktu terakhir recovery ditulis
+static time_t last_recovery_time = 0;
 
 // Memuat isi file recovery.tmp ke buffer saat startup jika tersedia.
 int checkRecovery() {
     FILE *fp = fopen(RECOVERY_FILE, "r");
     if (fp == NULL) {
         printf("Recovery tidak ditemukan.\n");
-        writeRecovery();  //agar file recovery dibuat untuk sesi berikutnya
-        return 0; // Tidak ada recovery, lanjutkan normal
+        writeRecovery();
+        return 0;
     }
 
-    char line[MAX_COL];
+    char line[256];
     clearBuffer();
 
-    // 1. Baca baris pertama untuk mencari tahu nama file aslinya
+    // Baca baris pertama untuk cek FILENAME
     if (fgets(line, sizeof(line), fp) != NULL) {
         if (strncmp(line, "FILENAME:", 9) == 0) {
-            line[strcspn(line, "\r\n")] = 0; // Bersihkan newline
-            strcpy(current_filename, line + 9); // Ambil nama setelah "FILENAME:"
+            line[strcspn(line, "\r\n")] = 0;
+            strcpy(current_filename, line + 9);
         } else {
-            // Jika baris pertama bukan FILENAME (file lama), 
-            // anggap sebagai teks biasa dan masukkan ke buffer
             line[strcspn(line, "\r\n")] = 0;
             appendLine(line);
         }
     }
 
-    // 2. Baca sisa baris lainnya sebagai isi teks
+    // Baca sisa baris sebagai isi teks
     while (fgets(line, sizeof(line), fp) != NULL) {
         line[strcspn(line, "\r\n")] = 0;
         appendLine(line);
@@ -46,40 +45,42 @@ int checkRecovery() {
 
     fclose(fp);
     set_cursor_to_end();
-    is_modified = 1 ; // Tandai buffer sebagai sudah dimodifikasi agar user tahu ada data yang dimuat
+    is_modified = 1;
 
     if (total_lines > 0) {
-        printf("[!] Recovery ditemukan, %d baris dimuat.\n", total_lines); 
+        printf("[!] Recovery ditemukan, %d baris dimuat.\n", total_lines);
         printf("Tekan sembarang tombol untuk lanjut...");
         getch();
     } else {
         printf("Recovery file kosong.\n");
     }
 
-    return 1; // Recovery berhasil dimuat
+    return 1;
 }
 
-// Menyimpan isi buffer saat ini ke file recovery.tmp untuk pemulihan sesi.
+// Menyimpan isi buffer ke recovery.tmp per 2 detik
 void writeRecovery() {
-    // Cek waktu dan akan skip kalau belum 2 detik
+    // Skip kalau belum 2 detik
     time_t now = time(NULL);
     if (difftime(now, last_recovery_time) < 2.0) {
         return;
     }
-    last_recovery_time = now;  // update waktu terakhir
+    last_recovery_time = now;
 
-    // Proteksi buffer kosong
     if (total_lines == 0) return;
 
     FILE *fp = fopen("recovery_new.tmp", "w");
     if (fp == NULL) return;
+
     fprintf(fp, "FILENAME:%s\n", current_filename);
 
-    int i;
-    for (i = 0; i < total_lines; i++) {
-        fprintf(fp, "%s\n", text_buffer[i]);
+    // Traverse linked list Putra
+    LineNode *current = head;
+    while (current != NULL) {
+        fprintf(fp, "%s\n", current->line);
+        current = current->next;
     }
-    
+
     fclose(fp);
     remove(RECOVERY_FILE);
     rename("recovery_new.tmp", RECOVERY_FILE);
