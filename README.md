@@ -12,16 +12,11 @@ Implementasi program menggunakan **bahasa C** dengan representasi data menggunak
 
 Text editor ini dirancang untuk memungkinkan pengguna melakukan manipulasi file teks langsung dari terminal Windows.
 
-Struktur data utama yang digunakan adalah **Array 2 Dimensi**:
+Struktur data utama yang digunakan adalah **Doubly Linked List**:
 
-- Baris → merepresentasikan **line teks**
-- Kolom → merepresentasikan **karakter**
-
-Akses karakter dilakukan menggunakan:
-
-```c
-text_buffer[row][col]
-```
+- Setiap baris teks disimpan sebagai **node** (`LineNode`)
+- Setiap node punya pointer ke node sebelumnya (`prev`) dan sesudahnya (`next`)
+- Akses baris dilakukan lewat fungsi `getLine(row)`
 
 Posisi kursor dikontrol menggunakan:
 
@@ -29,7 +24,6 @@ Posisi kursor dikontrol menggunakan:
 cursor_row
 cursor_col
 ```
-
 ---
 
 # Fitur
@@ -41,8 +35,8 @@ Fitur utama yang diimplementasikan dalam program ini:
 - **Update File** – Mengedit isi teks dalam editor
 - **Save File** – Menyimpan isi buffer ke file (Ctrl+S)
 - **Save As** – Menyimpan ke nama file baru jika belum pernah disimpan
-- **Auto Recovery** – Menyimpan perubahan ke file sementara `recovery.tmp` secara otomatis setiap ada perubahan. Data dipulihkan otomatis saat program dibuka kembali setelah crash.
-
+- **Auto Recovery** – Menyimpan perubahan ke file sementara `recovery.tmp` secara otomatis setiap **2  detik**. Data dipulihkan otomatis saat program dibuka kembali setelah crash.
+ 
 ---
 
 # Setup Environment
@@ -121,7 +115,7 @@ Sawgit>
 
 Pilih menu dengan menekan angka **1-5** di keyboard.
 
-Jika ada data recovery dari sesi sebelumnya:
+Jika ada data recovery dari sesi sebelumnya: 
 
 ```
 [!] Recovery ditemukan, 5 baris dimuat.
@@ -203,9 +197,10 @@ Posisi: Baris 3, Kolom 7 | Ctrl+S: Save | ESC: Menu
 
 ### 7. Autosave & Recovery
 
-- Setiap keystroke otomatis disimpan ke `recovery.tmp`
-- Jika program crash atau di-kill mendadak, signal handler otomatis memanggil `writeRecovery()` sebelum program mati — data tetap aman
-- Saat program dibuka kembali, data dipulihkan otomatis
+- Setiap keystroke trigger  `writeRecovery()`, tapi file hanya ditulis ke disk **setiap 2 detik** — efisien dan tidak membebani disk
+- File ditulis ke `recovery_new.tmp` dulu, baru di-rename ke `recovery.tmp` — **Safe Write** untuk mencegah corrupt
+- Jika program crash atau di-kill mendadak, signal handler otomatis memanggil `writeRecovery()` sebelum program mati
+- Saat program dibuka kembali, data dipulihkan otomatis termasuk nama file yang sedang dibuka
 
 Contoh saat crash:
 
@@ -226,13 +221,34 @@ Program menggunakan representasi **Array 2D Statis** sebagai basis penyimpanan t
 * **`line_length[MAX_ROW]`**: Array pendukung yang melacak jumlah karakter secara presisi pada setiap baris.
 * **`total_lines`**: Variabel global yang mencatat jumlah baris yang saat ini terisi di dalam buffer.
 
-#### 2. Mekanisme Edit Teks
-Untuk memberikan pengalaman penyuntingan yang responsif, program mengimplementasikan logika pergeseran memori (*memory shifting*):
+### 8. Arsitektur Buffer & Logika Manipulasi Teks
 
-* **Penyisipan Karakter (Insert)**: Saat karakter baru dimasukkan, program menggunakan fungsi `memmove` untuk menggeser seluruh karakter di sebelah kanan kursor sebanyak satu posisi ke kanan.
-* **Penghapusan (Backspace)**: 
-    * Jika dilakukan di tengah baris, karakter akan digeser ke kiri menggunakan `memmove`.
-    * Jika dilakukan di awal baris (kolom 0), isi baris saat ini akan digabungkan ke baris sebelumnya menggunakan `memcpy`, lalu baris-baris di bawahnya digeser naik untuk mengisi kekosongan.
+Program menggunakan **Doubly Linked List** sebagai struktur data utama untuk menyimpan teks.
+
+#### 1. Struktur Data Utama
+
+Setiap baris teks disimpan sebagai node `LineNode`:
+
+```c
+typedef struct LineNode {
+    char *line;      // isi teks (dynamic string)
+    int length;      // panjang teks
+    int capacity;    // kapasitas memori yang dialokasikan
+    struct LineNode *prev;
+    struct LineNode *next;
+} LineNode;
+```
+
+- `head` → node pertama (baris pertama)
+- `tail` → node terakhir (baris terakhir)
+- `total_lines` → jumlah baris aktif
+
+#### 2. Mekanisme Edit Teks
+
+- **Insert karakter** — `memmove` geser karakter di kanan kursor ke kanan
+- **Backspace** — kalau di tengah baris, geser kiri. Kalau di awal baris, merge dengan baris sebelumnya
+- **Enter** — potong baris di posisi kursor, buat node baru untuk sisa teks
+
 #### 3. Error Handling & Validasi
 Untuk meningkatkan keamanan dan stabilitas, program dilengkapi dengan mekanisme error handling yang mencakup:
 * **Validasi Input**: Fungsi seperti `appendLine` memeriksa apakah string input tidak NULL sebelum diproses.
@@ -262,15 +278,14 @@ Untuk mencegah navigasi yang tidak valid, modul kursor dilengkapi dengan error h
 
 ### 10. Spesifikasi Teknis Buffer
 
-Implementasi buffer ini memiliki batasan teknis sebagai berikut:
-
-| Komponen | Deskripsi | Batas Maksimal |
+| Komponen | Deskripsi | Keterangan |
 | :--- | :--- | :--- |
-| **Kapasitas Baris** | Jumlah total baris dalam buffer | 100 Baris |
-| **Kapasitas Kolom** | Jumlah total karakter per baris | 100 Karakter |
-| **Tipe Data** | Format penyimpanan karakter | `char` (1 Byte) |
+| **Struktur Data** | Doubly Linked List | Dinamis, tidak ada batas tetap |
+| **Kapasitas Baris** | Jumlah total baris | Dinamis sesuai memori |
+| **Kapasitas Kolom** | Karakter per baris | Dinamis, auto-resize |
+| **Tipe Data** | Format penyimpanan | `char*` (dynamic string) |
 | **Scrolling** | Mekanisme tampilan | Vertikal (Row-offset) |
-| **Error Handling** | Mekanisme validasi | Bounds checking & pesan error (Bahasa Indonesia) |
+| **Error Handling** | Mekanisme validasi | Bounds checking & pesan error |
 
 ---
 
@@ -334,13 +349,13 @@ Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
 | `recovery.c`   | Modul yang mengelola recovery |
 | `recovery.h`   | Header file modul recovery    |
 
-### Fungsi Recovery:
+#### Fungsi Recovery:
 
-| Fungsi            | Keterangan                                                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `checkRecovery()` | Cek dan muat data recovery saat startup. Return `1` jika ditemukan (langsung buka editor), return `0` jika tidak ada (tampilkan menu) |
-| `writeRecovery()` | Simpan isi buffer ke `recovery.tmp` — dipanggil otomatis setiap keystroke                                                             |
-| `clearRecovery()` | Hapus `recovery.tmp` saat keluar normal atau setelah save berhasil                                                                    |
+| Fungsi | Keterangan |
+| --- | --- |
+| `checkRecovery()` | Cek dan muat data recovery saat startup. Return `1` jika ditemukan, `0` jika tidak ada |
+| `writeRecovery()` | Simpan isi buffer ke `recovery.tmp` — dipanggil setiap keystroke tapi hanya tulis ke disk **setiap 2 detik** menggunakan `time()` dan `difftime()` |
+| `clearRecovery()` | Hapus `recovery.tmp` saat keluar normal atau setelah save berhasil |                                                                    |
 
 ---
 
