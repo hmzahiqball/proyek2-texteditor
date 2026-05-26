@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <windows.h>
 #include "render.h"
 #include "buffer.h"
 #include "cursor.h"
@@ -15,6 +16,15 @@ int view_col_offset = 0;
 char bottom_message[256] = "";
 int show_message = 0;
 int input_mode = 0;
+
+// Helper function untuk set cursor position menggunakan Windows API
+void setCursorPosition(int row, int col) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD coord;
+    coord.X = col - 1;  // 0-based
+    coord.Y = row - 1;  // 0-based
+    SetConsoleCursorPosition(hConsole, coord);
+}
 
 void renderMainMenu() 
 {
@@ -72,8 +82,7 @@ void renderHelpScreen()
 // Fungsi utama untuk menggambar ulang seluruh tampilan editor ke layar terminal
 void renderScreen(void *unused_buffer, int unused_rows) 
 {
-    
-    printf("\033[H"); 
+    system("cls");  // Clear screen untuk Windows compatibility
 
     // TRAVERSE DLL: Cari node awal berdasarkan scroll saat ini (Menggunakan WHILE)
     LineNode *current = head;
@@ -88,8 +97,8 @@ void renderScreen(void *unused_buffer, int unused_rows)
     int printed_lines = 0;
     while (current != NULL && printed_lines < SCREEN_HEIGHT) 
     {
-        // \033[K membersihkan sisa baris ke kanan agar tidak membekas
-        printf("%s\033[K\n", current->line); 
+        // Cetak line content
+        printf("%s\n", current->line); 
         current = current->next;
         printed_lines++;
     }
@@ -97,33 +106,35 @@ void renderScreen(void *unused_buffer, int unused_rows)
     // Bersihkan sisa layar ke bawah jika isi file lebih pendek dari SCREEN_HEIGHT
     while (printed_lines < SCREEN_HEIGHT) 
     {
-        printf("\033[K\n");
-        printed_lines++; // FIX: Tambahkan ini agar nilai printed_lines mencapai SCREEN_HEIGHT (20)
+        printf("\n");
+        printed_lines++;
     }
 
     // STATUS BAR
-    printf("--------------------------------------------------\033[K\n");
+    printf("--------------------------------------------------\n");
     if (is_modified == 1) 
     {
-        printf("[Unsaved Changes] | File: %s | Total Baris: %d\033[K\n", current_filename, total_lines);
+        printf("[Unsaved Changes] | File: %s | Total Baris: %d\n", current_filename, total_lines);
     } 
     else 
     {
-        printf("[Saved] | File: %s | Total Baris: %d\033[K\n", current_filename, total_lines);
+        printf("[Saved] | File: %s | Total Baris: %d\n", current_filename, total_lines);
     }
-    printf("--------------------------------------------------\033[K\n");
+    printf("--------------------------------------------------\n");
     
-    printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | Ctrl+A: Save As | ESC: Menu\033[K\n", 
+    printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | Ctrl+A: Save As | ESC: Menu\n", 
        cursor_row + 1, cursor_col + 1);
 
     if (show_message) 
     {
-        printf("\n%s\033[K", bottom_message); 
+        printf("\n%s", bottom_message); 
     }
     else
     {
-        printf("\n\033[K");
+        printf("\n");
     }
+
+    fflush(stdout);
 
     // PENEMPATAN KURSOR TERMINAL SECARA DINAMIS
     if (input_mode) 
@@ -131,16 +142,18 @@ void renderScreen(void *unused_buffer, int unused_rows)
         // Kunci koordinat baris prompt di terminal (SCREEN_HEIGHT + 6 baris komponen status bar)
         int msg_line = SCREEN_HEIGHT + 6; 
         
+        // Hitung posisi cursor di akhir bottom_message
+        // Jika ada newline, hitung dari setelah newline terakhir
         char *last_line = strrchr(bottom_message, '\n');
         int col = last_line ? strlen(last_line + 1) + 1 : strlen(bottom_message) + 1;
         
-        // Pindahkan kursor fisik terminal ke ujung prompt input nama file di bawah
-        printf("\033[%d;%dH", msg_line, col);
+        // Gunakan Windows API untuk positioning yang reliable
+        setCursorPosition(msg_line, col);
     } 
     else 
     {
         // Kembalikan kursor terminal ke posisi teks editor utama saat mode mengetik biasa
-        printf("\033[%d;%dH", cursor_row - view_row_offset + 1, cursor_col + 1);
+        setCursorPosition(cursor_row - view_row_offset + 1, cursor_col + 1);
     }
 
     fflush(stdout); // Paksa seluruh buffer karakter keluar bersamaan ke layar terminal

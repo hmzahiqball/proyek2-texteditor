@@ -70,6 +70,9 @@ void handleOpenAction() {
         if (strlen(filename) > 0) 
 		{
             openFile(filename);      // Membuka dan memuat isi file ke buffer
+            // Gunakan strncpy untuk prevent buffer overflow
+            strncpy(current_filename, filename, sizeof(current_filename) - 1);
+            current_filename[sizeof(current_filename) - 1] = '\0';
             handleEditInput(filename); // Pindah ke loop utama editor
         }
     }
@@ -123,7 +126,9 @@ void handleNewFileAction()
     // Alur pembuatan file baru
     clearBuffer();                        
     initCursor();                         
-    strcpy(current_filename, "Untitled"); 
+    // Gunakan strncpy untuk prevent buffer overflow
+    strncpy(current_filename, "Untitled", sizeof(current_filename) - 1);
+    current_filename[sizeof(current_filename) - 1] = '\0';
     is_modified = 0;                      
     
     renderScreen(NULL, total_lines);      
@@ -134,7 +139,8 @@ void handleNewFileAction()
 void handleSaveAsAction() {
     char temp_name[256];
     input_mode = 1; // Kursor pindah ke area pesan
-    strcpy(bottom_message, "[SAVE AS] Masukkan nama file baru: ");
+    strncpy(bottom_message, "[SAVE AS] Masukkan nama file baru: ", sizeof(bottom_message) - 1);
+    bottom_message[sizeof(bottom_message) - 1] = '\0';
     show_message = 1;
     renderScreen(NULL, total_lines);
 
@@ -144,16 +150,20 @@ void handleSaveAsAction() {
         if (strlen(temp_name) > 0) {
             // Validasi keberadaan file
             if (isFileExists(temp_name)) {
-                strcpy(bottom_message, "[WARNING] File sudah ada! Timpa? (y/n): ");
+                strncpy(bottom_message, "[WARNING] File sudah ada! Timpa? (y/n): ", sizeof(bottom_message) - 1);
+                bottom_message[sizeof(bottom_message) - 1] = '\0';
                 renderScreen(NULL, total_lines);
                 if (_getch() != 'y') {
-                    strcpy(bottom_message, "[BATAL] Penyimpanan dibatalkan.");
+                    strncpy(bottom_message, "[BATAL] Penyimpanan dibatalkan.", sizeof(bottom_message) - 1);
+                    bottom_message[sizeof(bottom_message) - 1] = '\0';
                     input_mode = 0;
                     return;
                 }
             }
             saveToFile(temp_name);
-            strcpy(current_filename, temp_name);
+            // Gunakan strncpy untuk prevent buffer overflow
+            strncpy(current_filename, temp_name, sizeof(current_filename) - 1);
+            current_filename[sizeof(current_filename) - 1] = '\0';
         }
     }
     input_mode = 0;
@@ -213,7 +223,9 @@ void handleEditInput(char *filename)
 	is_in_editor = 1; //Menandai status bahwa user sedang dalam mode edit
 	
     if (total_lines == 0) total_lines = 1; //Minimal editor punya 1 baris
-    strcpy(current_filename, filename); // set nama file yang sedang aktif dikerjakan
+    // Gunakan strncpy untuk prevent buffer overflow
+    strncpy(current_filename, filename, sizeof(current_filename) - 1);
+    current_filename[sizeof(current_filename) - 1] = '\0';
 
     while (1) 
 	{
