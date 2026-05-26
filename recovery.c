@@ -30,7 +30,9 @@ int checkRecovery() {
     if (fgets(line, sizeof(line), fp) != NULL) {
         if (strncmp(line, "FILENAME:", 9) == 0) {
             line[strcspn(line, "\r\n")] = 0;
-            strcpy(current_filename, line + 9);
+            // Gunakan strncpy untuk prevent buffer overflow
+            strncpy(current_filename, line + 9, sizeof(current_filename) - 1);
+            current_filename[sizeof(current_filename) - 1] = '\0';
         } else {
             line[strcspn(line, "\r\n")] = 0;
             appendLine(line);

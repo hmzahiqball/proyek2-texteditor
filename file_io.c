@@ -41,7 +41,8 @@ void saveToFile(const char *filename) {
     fclose(fp);
 
     is_modified = 0;
-    strcpy(current_filename, filename);
+    strncpy(current_filename, filename, sizeof(current_filename) - 1);
+    current_filename[sizeof(current_filename) - 1] = '\0'; // Kunci karakter terakhir dengan NULL
 
     clearRecovery();
 
@@ -62,7 +63,9 @@ void openFile(const char *filename) {
     // Bersihkan buffer lama
     clearBuffer();
 
-    strcpy(current_filename, filename);
+    // Gunakan strncpy untuk prevent buffer overflow
+    strncpy(current_filename, filename, sizeof(current_filename) - 1);
+    current_filename[sizeof(current_filename) - 1] = '\0';
 
     // Buffer baca (dibesarkan biar aman)
     char line[1024];
@@ -85,4 +88,4 @@ void openFile(const char *filename) {
 
     sprintf(bottom_message, "[INFO] File '%s' berhasil dibuka (%d baris)", filename, total_lines);
     show_message = 1;
-}
+} 
