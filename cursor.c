@@ -75,6 +75,7 @@ void move_left() {
         cursor_col = current_line->length;
     }
 
+    limitCursorBounds();
     adjust_viewport();
 }
 

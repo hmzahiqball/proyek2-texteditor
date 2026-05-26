@@ -171,50 +171,54 @@ void insertLineAt(int row, const char *text) {
     total_lines++;
 }
 
-void deleteLineAt(int row) {
-    // Validasi
+// Helper: Menghapus node dari linked list (HANYA untuk struktur, bukan karakter)
+void removeLineNode(int row) {
     if (row < 0 || row >= total_lines)
         return;
 
     LineNode *current = getLine(row);
-    /* ensure global current_line follows the node we modify */
-    current_line = current;
+    if (current == NULL)
+        return;
 
-    // Backspace biasa: hapus karakter sebelum cursor
-    if (cursor_col > 0) {
+    // Lepaskan dari linked list
+    if (current->prev != NULL)
+        current->prev->next = current->next;
+    if (current->next != NULL)
+        current->next->prev = current->prev;
 
-        memmove(
-            current->line + cursor_col - 1,
-            current->line + cursor_col,
-            (size_t)(current->length - cursor_col + 1)
-        );
+    // Update head/tail jika perlu
+    if (current == head)
+        head = current->next;
+    if (current == tail)
+        tail = current->prev;
 
-        current->length--;
+    // Bebaskan memory
+    free(current->line);
+    free(current);
+    total_lines--;
+}
 
-        cursor_col--;
+// Menghapus baris pada posisi tertentu (wrapper untuk backward compatibility)
+void deleteLineAt(int row) {
+    if (row < 0 || row >= total_lines)
+        return;
+
+    LineNode *current = getLine(row);
+    if (current == NULL)
+        return;
+
+    // Update global current_line jika menunjuk ke node yang dihapus
+    if (current_line == current) {
+        if (current->next != NULL) {
+            current_line = current->next;
+        } else if (current->prev != NULL) {
+            current_line = current->prev;
+        } else {
+            current_line = NULL;
+        }
     }
 
-    // Merge line ke sebelumnya saat cursor di kolom 0
-    else if (current->prev != NULL) {
-
-        LineNode *prev = current->prev;
-
-        int prev_len = prev->length;
-
-        ensureCapacity(prev, prev->length + current->length + 1);
-
-        /* Append current->line ke akhir prev secara langsung */
-        memcpy(prev->line + prev->length, current->line, (size_t)current->length + 1);
-
-        prev->length += current->length;
-
-        /* Hapus node current dan set current_line ke prev agar konsisten */
-        deleteLineAt(cursor_row);
-
-        current_line = prev;
-        cursor_row--;
-        cursor_col = prev_len;
-    }
+    removeLineNode(row);
 }
 
 void insert_char(char c) {
@@ -254,9 +258,8 @@ void delete_char() {
     if (current == NULL)
         return;
 
-    // Backspace biasa
+    // Case 1: Backspace biasa (cursor di tengah/akhir baris, bukan kolom 0)
     if (cursor_col > 0) {
-
         memmove(
             &current->line[cursor_col - 1],
             &current->line[cursor_col],
@@ -264,32 +267,36 @@ void delete_char() {
         );
 
         current->length--;
-
         cursor_col--;
     }
-
-    // Merge line
+    // Case 2: Backspace di kolom 0 - merge dengan baris sebelumnya
     else if (current->prev != NULL) {
-
         LineNode *prev = current->prev;
-
         int prev_len = prev->length;
+        int current_row = cursor_row;  // Simpan baris saat ini sebelum di-update
 
+        // Pastikan prev punya kapasitas untuk menampung current
         ensureCapacity(
             prev,
             prev->length + current->length + 1
         );
 
-        strcat(prev->line, current->line);
+        // Copy isi current ke akhir prev (dengan null terminator)
+        memcpy(
+            prev->line + prev->length,
+            current->line,
+            (size_t)current->length + 1
+        );
 
         prev->length += current->length;
 
-        deleteLineAt(cursor_row);
-
+        // Update cursor ke akhir baris sebelumnya SEBELUM delete node
         current_line = prev;
-
         cursor_row--;
         cursor_col = prev_len;
+
+        // Hapus node current dari linked list (gunakan original row)
+        removeLineNode(current_row);
     }
 
     limitCursorBounds();
