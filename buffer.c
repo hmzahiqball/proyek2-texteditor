@@ -54,7 +54,7 @@ void initBuffer() {
     appendLine("");
 }
 
-// Hapus Semua Buffer
+// Hapus Semua Buffer (tanpa menambahkan baris kosong)
 void clearBuffer() {
     LineNode *current = head;
 
@@ -72,8 +72,6 @@ void clearBuffer() {
     tail = NULL;
 
     total_lines = 0;
-
-    appendLine("");
 }
 
 // Tambah Line Baru
