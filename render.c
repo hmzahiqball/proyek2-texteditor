@@ -11,7 +11,7 @@ extern char current_filename[256];
 extern int total_lines;
 
 int view_row_offset = 0;
-int view_col_offset = 0;
+int view_col_offset = 0; // Mengendalikan pergeseran jendela visual ke kanan-kiri
 
 char bottom_message[256] = "";
 int show_message = 0;
@@ -78,14 +78,13 @@ void renderHelpScreen()
     printf("\nTekan sembarang tombol untuk kembali...");
 }
 
-
-// Fungsi utama untuk menggambar ulang seluruh tampilan editor ke layar terminal
 // Fungsi utama untuk menggambar ulang seluruh tampilan editor ke layar terminal
 void renderScreen(void *unused_buffer, int unused_rows) 
 {
-    printf("\033[H");  // Pindahkan kursor ke pojok kiri atas (0,0) TANPA MENGHAPUS LAYAR (Anti-Flicker)
+    // ANTI-FLICKER: Hanya kembali ke pojok kiri atas (0,0) tanpa menghapus layar hitam
+    printf("\033[H"); 
 
-    // TRAVERSE DLL: Cari node awal berdasarkan scroll saat ini
+    // TRAVERSE DLL: Cari node awal berdasarkan scroll vertikal saat ini
     LineNode *current = head;
     int i = 0;
     while (i < view_row_offset && current != NULL) 
@@ -94,65 +93,36 @@ void renderScreen(void *unused_buffer, int unused_rows)
         i = i + 1;
     }
 
-    // VARIABLES UNTUK MENGHITUNG TEKS WRAPPING SECARA PRESISI
+    // 1. CETAK TEKS VIEWPORT (ADOPRESI HORIZONTAL SCROLLING)
     int printed_lines = 0;
-    int visual_cursor_row = 1; 
-    int visual_cursor_col = 1; 
-    
-    // 1. CETAK TEKS VIEWPORT (Mekanisme Pemotongan Karakter per SCREEN_WIDTH + Sapu Bersih \033[K)
-    int current_row_idx = view_row_offset;
     while (current != NULL && printed_lines < SCREEN_HEIGHT) 
     {
         int line_len = strlen(current->line);
         
-        if (line_len == 0) {
-            if (current_row_idx == cursor_row) {
-                visual_cursor_row = printed_lines + 1;
-                visual_cursor_col = 1;
-            }
-            printf("\033[K\n"); // Sapu bersih baris kosong ke kanan sebelum turun
-            printed_lines++;
-        } else {
-            int chars_printed = 0;
-            while (chars_printed < line_len && printed_lines < SCREEN_HEIGHT) {
-                int rem = line_len - chars_printed;
-                int to_print = (rem > SCREEN_WIDTH) ? SCREEN_WIDTH : rem;
-                
-                // Cek koordinat kursor di dalam segmen lipatan baris
-                if (current_row_idx == cursor_row && cursor_col >= chars_printed && cursor_col < chars_printed + to_print) {
-                    visual_cursor_row = printed_lines + 1;
-                    visual_cursor_col = (cursor_col - chars_printed) + 1;
-                }
-                if (current_row_idx == cursor_row && cursor_col == chars_printed + to_print && to_print < SCREEN_WIDTH) {
-                    visual_cursor_row = printed_lines + 1;
-                    visual_cursor_col = to_print + 1;
-                }
-
-                // Cetak segmen teks diikuti \033[K untuk menghapus sisa karakter lama di baris tersebut
-                printf("%.*s\033[K\n", to_print, current->line + chars_printed);
-                
-                chars_printed += to_print;
-                printed_lines++;
-            }
-            
-            if (current_row_idx == cursor_row && cursor_col == line_len && line_len % SCREEN_WIDTH == 0) {
-                visual_cursor_row = printed_lines + 1;
-                visual_cursor_col = 1;
-            }
+        // Jika panjang teks baris melebihi offset geser jendela saat ini
+        if (line_len > view_col_offset) 
+        {
+            // Cetak dimulai dari karakter ke-view_col_offset, potong sepanjang SCREEN_WIDTH (80)
+            printf("%.*s\033[K\n", SCREEN_WIDTH, current->line + view_col_offset);
+        } 
+        else 
+        {
+            // Jika baris kosong atau posisinya di luar offset, cetak baris kosong bersih
+            printf("\033[K\n");
         }
-
+        
         current = current->next;
-        current_row_idx++;
+        printed_lines++;
     }
 
-    // 2. PEMBERSIH AREA SISA LAYAR BAWAH (Sapu bersih per baris agar bebas flicker)
+    // Bersihkan sisa layar ke bawah jika isi file lebih pendek dari SCREEN_HEIGHT
     while (printed_lines < SCREEN_HEIGHT) 
     {
-        printf("\033[K\n"); 
-        printed_lines = printed_lines + 1;
+        printf("\033[K\n");
+        printed_lines++;
     }
 
-    // 3. STATUS BAR (UX Polish - Konsisten 80 Kolom)
+    // 2. STATUS BAR (UX Polish Tania: Konsisten Tegak Lurus 80 Kolom)
     printf("========================================================================\033[K\n");
     if (is_modified == 1) {
         printf(" [UNSAVED CHANGES] ");
@@ -166,7 +136,7 @@ void renderScreen(void *unused_buffer, int unused_rows)
     printf(" Posisi: Baris %d, Kolom %d | Ctrl+S: Simpan | Ctrl+A: Save As | ESC: Menu\033[K\n", 
            cursor_row + 1, cursor_col + 1);
 
-    // 4. CETAK PROMPT AREA PESAN BAWAH
+    // 3. CETAK PROMPT AREA PESAN BAWAH
     if (show_message) 
     {
         printf("\n%s\033[K", bottom_message); 
@@ -178,19 +148,25 @@ void renderScreen(void *unused_buffer, int unused_rows)
 
     fflush(stdout);
 
-    // 5. PENEMPATAN KURSOR TERMINAL SECARA DINAMIS (Menggunakan Windows API bawaan)
+    // 4. PENEMPATAN KURSOR TERMINAL SECARA DINAMIS (Kunci Koordinat Absolut Windows API)
     if (input_mode) 
     {
+        // Posisi baris input nama file: Viewport (20) + Status Bar (4) + Jarak Newline (2)
         int msg_line = SCREEN_HEIGHT + 6; 
+        
         char *last_line = strrchr(bottom_message, '\n');
         int col = last_line ? strlen(last_line + 1) + 1 : strlen(bottom_message) + 1;
+        
         setCursorPosition(msg_line, col);
     } 
     else 
     {
-        // Kursor visual dilempar secara presisi berdasarkan pelipatan karakter
-        setCursorPosition(visual_cursor_row, visual_cursor_col);
+        // Posisi kursor mode ketik dihitung relatif terhadap offset jendela saat ini (row_offset dan col_offset)
+        int visual_row = cursor_row - view_row_offset + 1;
+        int visual_col = cursor_col - view_col_offset + 1;
+        
+        setCursorPosition(visual_row, visual_col);
     }
 
-    fflush(stdout); 
+    fflush(stdout); // Semburkan data ke layar terminal secara serentak
 }
