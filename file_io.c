@@ -83,6 +83,11 @@ void openFile(const char *filename) {
 
     is_modified = 0;
 
+    // Jika file kosong, tambahkan 1 baris kosong agar editor tetap punya 1 baris
+    if (total_lines == 0) {
+        appendLine("");
+    }
+
     // Reset cursor
     initCursor();
 

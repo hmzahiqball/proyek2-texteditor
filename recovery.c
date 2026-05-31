@@ -46,6 +46,12 @@ int checkRecovery() {
     }
 
     fclose(fp);
+    
+    // Jika recovery file kosong, tambahkan 1 baris kosong agar editor tetap punya 1 baris
+    if (total_lines == 0) {
+        appendLine("");
+    }
+    
     set_cursor_to_end();
     is_modified = 1;
 
