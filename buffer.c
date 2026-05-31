@@ -247,6 +247,7 @@ void insert_char(char c) {
 
     limitCursorBounds();
     adjust_viewport();
+    adjust_horizontal_viewport();
 }
 
 // Delete karakter (Backspace)
@@ -299,6 +300,7 @@ void delete_char() {
 
     limitCursorBounds();
     adjust_viewport();
+    adjust_horizontal_viewport();
 }
 
 // Delete karakter (Delete key)
@@ -344,6 +346,7 @@ void delete_forward() {
 
     limitCursorBounds();
     adjust_viewport();
+    adjust_horizontal_viewport();
 }
 
 // Menambahkan newline
@@ -384,6 +387,7 @@ void insert_newline() {
 
     limitCursorBounds();
     adjust_viewport();
+    adjust_horizontal_viewport();
 }
 
 // Mendapatkan panjang line

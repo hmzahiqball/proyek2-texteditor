@@ -31,5 +31,6 @@ void move_down();
 
 // Menyesuaikan viewport berdasarkan posisi cursor
 void adjust_viewport();
+void adjust_horizontal_viewport();
 
 #endif

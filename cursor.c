@@ -77,6 +77,7 @@ void move_left() {
 
     limitCursorBounds();
     adjust_viewport();
+    adjust_horizontal_viewport();
 }
 
 // Gerakan cursor ke kanan
@@ -94,6 +95,7 @@ void move_right() {
     }
 
     adjust_viewport();
+    adjust_horizontal_viewport();
 }
 
 // Gerakan cursor ke atas
@@ -109,6 +111,7 @@ void move_up() {
     }
 
     adjust_viewport();
+    adjust_horizontal_viewport();
 }
 
 // Gerakan cursor ke bawah
@@ -124,6 +127,7 @@ void move_down() {
     }
 
     adjust_viewport();
+    adjust_horizontal_viewport();
 }
 
 // Menyesuaikan viewport berdasarkan posisi cursor
@@ -142,5 +146,17 @@ void adjust_viewport() {
 
     if (view_row_offset < 0) {
         view_row_offset = 0;
+    }
+}
+
+// Menyesuaikan viewport berdasarkan posisi cursor secara horizontal
+void adjust_horizontal_viewport() {
+    // Jika kursor bergerak mundur melewati batas kiri jendela visual saat ini
+    if (cursor_col < view_col_offset) {
+        view_col_offset = cursor_col;
+    }
+    // Jika kursor bergerak maju menabrak batas kanan jendela visual
+    else if (cursor_col >= view_col_offset + SCREEN_WIDTH) {
+        view_col_offset = cursor_col - SCREEN_WIDTH + 1;
     }
 }
