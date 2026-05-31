@@ -28,7 +28,7 @@ void setCursorPosition(int row, int col) {
 
 void renderMainMenu() 
 {
-    system("cls"); // Pastikan layar bersih
+    printf("\033[H\033[J"); // Bersihkan layar menu tanpa flicker
     printf("==================================================\n");
     printf("=========== Saw<git> | Text Editor ===============\n");
     printf("1. Open file\n");
@@ -47,7 +47,7 @@ void renderMainMenu()
 
 void renderInfoScreen() 
 {
-    system("cls");
+    printf("\033[H\033[J");
     printf("============================================\n");
     printf("========== INFO APLIKASI SAW<GIT> ==========\n");
     printf("============================================\n");
@@ -59,10 +59,9 @@ void renderInfoScreen()
     printf("\nTekan sembarang tombol untuk kembali..."     );
 }
 
-
 void renderHelpScreen() 
 {
-    system("cls"); 
+    printf("\033[H\033[J"); 
     printf("==================================================\n");
     printf("           BANTUAN SHORTCUT SAW<GIT>              \n");
     printf("==================================================\n");
@@ -79,82 +78,119 @@ void renderHelpScreen()
     printf("\nTekan sembarang tombol untuk kembali...");
 }
 
+
+// Fungsi utama untuk menggambar ulang seluruh tampilan editor ke layar terminal
 // Fungsi utama untuk menggambar ulang seluruh tampilan editor ke layar terminal
 void renderScreen(void *unused_buffer, int unused_rows) 
 {
-    system("cls");  // Clear screen untuk Windows compatibility
+    printf("\033[H");  // Pindahkan kursor ke pojok kiri atas (0,0) TANPA MENGHAPUS LAYAR (Anti-Flicker)
 
-    // TRAVERSE DLL: Cari node awal berdasarkan scroll saat ini (Menggunakan WHILE)
+    // TRAVERSE DLL: Cari node awal berdasarkan scroll saat ini
     LineNode *current = head;
     int i = 0;
     while (i < view_row_offset && current != NULL) 
     {
         current = current->next;
-        i++;
+        i = i + 1;
     }
 
-    // CETAK TEKS VIEWPORT
+    // VARIABLES UNTUK MENGHITUNG TEKS WRAPPING SECARA PRESISI
     int printed_lines = 0;
+    int visual_cursor_row = 1; 
+    int visual_cursor_col = 1; 
+    
+    // 1. CETAK TEKS VIEWPORT (Mekanisme Pemotongan Karakter per SCREEN_WIDTH + Sapu Bersih \033[K)
+    int current_row_idx = view_row_offset;
     while (current != NULL && printed_lines < SCREEN_HEIGHT) 
     {
-        // Cetak line content
-        printf("%s\n", current->line); 
+        int line_len = strlen(current->line);
+        
+        if (line_len == 0) {
+            if (current_row_idx == cursor_row) {
+                visual_cursor_row = printed_lines + 1;
+                visual_cursor_col = 1;
+            }
+            printf("\033[K\n"); // Sapu bersih baris kosong ke kanan sebelum turun
+            printed_lines++;
+        } else {
+            int chars_printed = 0;
+            while (chars_printed < line_len && printed_lines < SCREEN_HEIGHT) {
+                int rem = line_len - chars_printed;
+                int to_print = (rem > SCREEN_WIDTH) ? SCREEN_WIDTH : rem;
+                
+                // Cek koordinat kursor di dalam segmen lipatan baris
+                if (current_row_idx == cursor_row && cursor_col >= chars_printed && cursor_col < chars_printed + to_print) {
+                    visual_cursor_row = printed_lines + 1;
+                    visual_cursor_col = (cursor_col - chars_printed) + 1;
+                }
+                if (current_row_idx == cursor_row && cursor_col == chars_printed + to_print && to_print < SCREEN_WIDTH) {
+                    visual_cursor_row = printed_lines + 1;
+                    visual_cursor_col = to_print + 1;
+                }
+
+                // Cetak segmen teks diikuti \033[K untuk menghapus sisa karakter lama di baris tersebut
+                printf("%.*s\033[K\n", to_print, current->line + chars_printed);
+                
+                chars_printed += to_print;
+                printed_lines++;
+            }
+            
+            if (current_row_idx == cursor_row && cursor_col == line_len && line_len % SCREEN_WIDTH == 0) {
+                visual_cursor_row = printed_lines + 1;
+                visual_cursor_col = 1;
+            }
+        }
+
         current = current->next;
-        printed_lines++;
+        current_row_idx++;
     }
 
-    // Bersihkan sisa layar ke bawah jika isi file lebih pendek dari SCREEN_HEIGHT
+    // 2. PEMBERSIH AREA SISA LAYAR BAWAH (Sapu bersih per baris agar bebas flicker)
     while (printed_lines < SCREEN_HEIGHT) 
     {
-        printf("\n");
-        printed_lines++;
+        printf("\033[K\n"); 
+        printed_lines = printed_lines + 1;
     }
 
-    // STATUS BAR
-    printf("--------------------------------------------------\n");
-    if (is_modified == 1) 
-    {
-        printf("[Unsaved Changes] | File: %s | Total Baris: %d\n", current_filename, total_lines);
-    } 
-    else 
-    {
-        printf("[Saved] | File: %s | Total Baris: %d\n", current_filename, total_lines);
+    // 3. STATUS BAR (UX Polish - Konsisten 80 Kolom)
+    printf("========================================================================\033[K\n");
+    if (is_modified == 1) {
+        printf(" [UNSAVED CHANGES] ");
+    } else {
+        printf(" [SAVED]           ");
     }
-    printf("--------------------------------------------------\n");
+    printf("| Berkas: %s | Total: %d baris\033[K\n", current_filename, total_lines);
+    printf("========================================================================\033[K\n");
     
-    printf("Posisi: Baris %d, Kolom %d | Ctrl+S: Save | Ctrl+A: Save As | ESC: Menu\n", 
-       cursor_row + 1, cursor_col + 1);
+    // Baris Posisi Kursor & Shortcut Navigasi
+    printf(" Posisi: Baris %d, Kolom %d | Ctrl+S: Simpan | Ctrl+A: Save As | ESC: Menu\033[K\n", 
+           cursor_row + 1, cursor_col + 1);
 
+    // 4. CETAK PROMPT AREA PESAN BAWAH
     if (show_message) 
     {
-        printf("\n%s", bottom_message); 
+        printf("\n%s\033[K", bottom_message); 
     }
     else
     {
-        printf("\n");
+        printf("\n\033[K"); 
     }
 
     fflush(stdout);
 
-    // PENEMPATAN KURSOR TERMINAL SECARA DINAMIS
+    // 5. PENEMPATAN KURSOR TERMINAL SECARA DINAMIS (Menggunakan Windows API bawaan)
     if (input_mode) 
     {
-        // Kunci koordinat baris prompt di terminal (SCREEN_HEIGHT + 6 baris komponen status bar)
         int msg_line = SCREEN_HEIGHT + 6; 
-        
-        // Hitung posisi cursor di akhir bottom_message
-        // Jika ada newline, hitung dari setelah newline terakhir
         char *last_line = strrchr(bottom_message, '\n');
         int col = last_line ? strlen(last_line + 1) + 1 : strlen(bottom_message) + 1;
-        
-        // Gunakan Windows API untuk positioning yang reliable
         setCursorPosition(msg_line, col);
     } 
     else 
     {
-        // Kembalikan kursor terminal ke posisi teks editor utama saat mode mengetik biasa
-        setCursorPosition(cursor_row - view_row_offset + 1, cursor_col + 1);
+        // Kursor visual dilempar secara presisi berdasarkan pelipatan karakter
+        setCursorPosition(visual_cursor_row, visual_cursor_col);
     }
 
-    fflush(stdout); // Paksa seluruh buffer karakter keluar bersamaan ke layar terminal
+    fflush(stdout); 
 }
