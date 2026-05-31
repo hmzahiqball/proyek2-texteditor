@@ -301,6 +301,51 @@ void delete_char() {
     adjust_viewport();
 }
 
+// Delete karakter (Delete key)
+void delete_forward() {
+    LineNode *current = getLine(cursor_row);
+
+    if (current == NULL)
+        return;
+
+    // Case 1: Delete karakter di posisi cursor
+    if (cursor_col < current->length) {
+
+        memmove(
+            &current->line[cursor_col],
+            &current->line[cursor_col + 1],
+            current->length - cursor_col
+        );
+
+        current->length--;
+    }
+
+    // Case 2: Cursor di akhir line -> merge dengan line berikutnya
+    else if (current->next != NULL) {
+
+        LineNode *next = current->next;
+        int next_row = cursor_row + 1;
+
+        ensureCapacity(
+            current,
+            current->length + next->length + 1
+        );
+
+        memcpy(
+            current->line + current->length,
+            next->line,
+            (size_t)next->length + 1
+        );
+
+        current->length += next->length;
+
+        removeLineNode(next_row);
+    }
+
+    limitCursorBounds();
+    adjust_viewport();
+}
+
 // Menambahkan newline
 void insert_newline() {
     LineNode *current = getLine(cursor_row);

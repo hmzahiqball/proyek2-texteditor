@@ -28,6 +28,7 @@ void deleteLineAt(int row);
 // Manipulasi karakter
 void insert_char(char c);
 void delete_char();
+void delete_forward();
 void insert_newline();
 
 // Fungsi tambahan
