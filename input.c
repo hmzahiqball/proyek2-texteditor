@@ -124,7 +124,8 @@ void handleNewFileAction()
     }
 
     // Alur pembuatan file baru
-    clearBuffer();                        
+    clearBuffer();                    
+    appendLine("");                 
     initCursor();                         
     // Gunakan strncpy untuk prevent buffer overflow
     strncpy(current_filename, "Untitled", sizeof(current_filename) - 1);
@@ -249,7 +250,7 @@ void handleEditInput(char *filename)
 		{
 			handleExitAction(); 
    		}
-        else if (c == 224) // Kode awal untuk tombol fungsi (Panah)
+        else if (c == 224) // Kode awal untuk tombol fungsi (Panah, Delete, dll)
 		{ 
             c = _getch();
             if (c == 72) 
@@ -267,6 +268,11 @@ void handleEditInput(char *filename)
             else if (c == 77) 
 			{
 				move_right();	
+			}
+            else if (c == 83)  // Delete key
+			{
+				delete_forward();
+				markAsModified();
 			}
         }
         else if (c == 7) // Ctrl+G (Help : Informasi Shortcut)
