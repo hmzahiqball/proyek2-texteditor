@@ -3,6 +3,20 @@
 
 extern int is_in_editor;
 
+void clearBottomMessage();
+
+int askConfirmation(const char *warning_text);
+
+void handleOpenAction();
+
+void handleNewFileAction();
+
+void handleSaveAsAction();
+
+void handleSaveAction();
+
+void handleExitAction();
+
 /**
  * handleMenuInput:
  * Menangani input angka 1-5 di layar utama.

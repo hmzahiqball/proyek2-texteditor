@@ -11,75 +11,85 @@
 
 int is_in_editor = 0;
 
-// Fungsi pembantu untuk menandai adanya perubahan pada dokumen
-void markAsModified() {
-    is_modified = 1; // Mengubah status file menjadi belum disimpan (unsaved)
-    
-    //Bersihkan notifikasi lama begitu user mengetik karakter baru
+// Helper: Reset notifikasi bawah agar bersih
+void clearBottomMessage() 
+{
+    show_message = 0;
+    strcpy(bottom_message, "");
+    renderScreen(NULL, total_lines);
+}
+
+// Helper: Menandai adanya perubahan dokumen (Autosave triggered)
+void markAsModified() 
+{
+    is_modified = 1;
     show_message = 0; 
     strcpy(bottom_message, ""); 
-    
-    writeRecovery(); // Mencadangkan perubahan ke file sementara (autosave)
+    writeRecovery(); 
+}
+
+// Helper: Konfirmasi pengamanan data y/n 
+int askConfirmation(const char *warning_text) 
+{
+    strcpy(bottom_message, warning_text);
+    show_message = 1;
+    renderScreen(NULL, total_lines);
+
+    int konfirmasi = _getch();
+    if (konfirmasi == 'y' || konfirmasi == 'Y') 
+	{
+        return 1; // User setuju (Yes)
+    }
+    clearBottomMessage();
+    return 0; // User batal (No)
 }
 
 // Menangani aksi membuka file
-void handleOpenAction() {
-    // 1. Jika sedang berada di dalam layar editor
+void handleOpenAction() 
+{
     if (is_in_editor == 1) 
-    {
-        // Cek status modifikasi untuk memberikan peringatan pengamanan data
+	{
+        // Jika ada perubahan, minta konfirmasi bypass data
         if (is_modified == 1) 
-        {
-            strcpy(bottom_message, "[WARNING] Perubahan belum disimpan! Buka file lain? (y/n): ");
+		{
+            if (!askConfirmation("[WARNING] Perubahan belum disimpan! Buka file lain? (y/n): ")) 
+			{
+				return;
+			}
         } 
-        else 
-        {
-            strcpy(bottom_message, "[OPEN] Buka file lain? (y/n): ");
+		else 
+		{
+            if (!askConfirmation("[OPEN] Buka file lain? (y/n): ")) 
+			{
+				return;
+			}
         }
         
-        show_message = 1;
-        renderScreen(NULL, total_lines);
-
-        // Konfirmasi getch aman dipakai di sini
-        int konfirmasi = _getch();
-        if (konfirmasi != 'y' && konfirmasi != 'Y') {
-            show_message = 0;
-            strcpy(bottom_message, "");      // Kosongkan pesan hantu di memori
-            renderScreen(NULL, total_lines); // Paksa gambar ulang layar agar terminal bersih seketika!
-            return;                          // Kembali ke editor dengan aman tanpa ketikan bocor
-        }
-    
-        input_mode = 1; // FIXED: Aktifkan input mode SEBELUM render agar kursor melompat ke bawah bawah
+        input_mode = 1; 
         strcpy(bottom_message, "[OPEN] Masukkan nama file yang ingin dibuka: ");
-        renderScreen(NULL, total_lines); // Render ulang layar agar kursor pindah ke bawah mengawal input user
+        renderScreen(NULL, total_lines); 
     } 
-    // 2. Jika dipanggil dari Menu Utama (pilihan nomor 1)
-    else 
-    {
+	else 
+	{
         printf("\n[OPEN] Masukkan nama file yang ingin dibuka: "); 
-        fflush(stdout); // Memastikan teks muncul sebelum fgets dijalankan
+        fflush(stdout);
     }
 
-    // 3. Proses pengambilan string nama file dari user
-    char filename[100]; // Buffer sementara untuk menampung input nama file
+    char filename[256];
     if (fgets(filename, sizeof(filename), stdin) != NULL) 
-    {
-        filename[strcspn(filename, "\n")] = 0; // Menghapus karakter Enter (\n) di akhir input
-        
-        input_mode = 0;        // Matikan mode input (kursor kembali ke area teks)
-        show_message = 0;      // Sembunyikan pesan instruksi
+	{
+        filename[strcspn(filename, "\n")] = 0; 
+        input_mode = 0;
+        show_message = 0;
 
-        // Jika nama file tidak kosong, muat file dan masuk ke editor
         if (strlen(filename) > 0) 
-        {
-            openFile(filename);      // Membuka dan memuat isi file ke buffer
+		{
+            openFile(filename);
             strncpy(current_filename, filename, sizeof(current_filename) - 1);
             current_filename[sizeof(current_filename) - 1] = '\0';
-            handleEditInput(filename); // Pindah ke loop utama editor
+            handleEditInput(filename);
         }
     }
-    
-    // Pastikan status selalu bersih jika input dibatalkan atau gagal
     input_mode = 0; 
     show_message = 0; 
 }
@@ -88,41 +98,24 @@ void handleOpenAction() {
 void handleNewFileAction() 
 {
     if (is_in_editor == 1) 
-    {
+	{
         if (is_modified == 1) 
-        {
-            strcpy(bottom_message, "[WARNING] Perubahan belum disimpan! Buat file baru? (y/n): ");
-            show_message = 1;
-            renderScreen(NULL, total_lines);
-
-            int konfirmasi = _getch(); 
-            if (konfirmasi != 'y' && konfirmasi != 'Y') {
-                show_message = 0;
-                strcpy(bottom_message, "");
-                renderScreen(NULL, total_lines); 
-                return; 
-            }
+		{
+            if (!askConfirmation("[WARNING] Perubahan belum disimpan! Buat file baru? (y/n): ")) 
+			{
+				return;
+			}
         } 
-        else 
-        {
-            strcpy(bottom_message, "[NEW FILE] Buat file baru? (y/n): ");
-            show_message = 1;
-            renderScreen(NULL, total_lines);
-            
-            int konfirmasi = _getch();
-            if (konfirmasi != 'y' && konfirmasi != 'Y') {
-                show_message = 0;
-                strcpy(bottom_message, "");
-                renderScreen(NULL, total_lines);
-                return;
-            }
+		else 
+		{
+            if (!askConfirmation("[NEW FILE] Buat file baru? (y/n): ")) 
+			{
+				return;	
+			}
         }
-        
-        show_message = 0;
-        strcpy(bottom_message, "");
+        clearBottomMessage();
     }
 
-    // Alur pembuatan file baru
     clearBuffer();                    
     appendLine("");                 
     initCursor();                         
@@ -134,27 +127,31 @@ void handleNewFileAction()
     handleEditInput("");                  
 }
 
-// Fungsi Save As: Selalu minta nama dan cek duplikasi
-void handleSaveAsAction() {
+// Fungsi Save As
+void handleSaveAsAction() 
+{
     char temp_name[256];
-    input_mode = 1; // FIXED: Aktifkan input mode SEBELUM render agar kursor melompat ke bawah bawah
+    input_mode = 1; 
     strncpy(bottom_message, "[SAVE AS] Masukkan nama file baru: ", sizeof(bottom_message) - 1);
     bottom_message[sizeof(bottom_message) - 1] = '\0';
     show_message = 1;
-    renderScreen(NULL, total_lines); // Kursor otomatis diam manis di sebelah nama file baru
+    renderScreen(NULL, total_lines); 
 
-    if (fgets(temp_name, sizeof(temp_name), stdin) != NULL) {
+    if (fgets(temp_name, sizeof(temp_name), stdin) != NULL) 
+    {
         temp_name[strcspn(temp_name, "\n")] = 0;
         
-        if (strlen(temp_name) > 0) {
-            if (isFileExists(temp_name)) {
-                strncpy(bottom_message, "[WARNING] File sudah ada! Timpa? (y/n): ", sizeof(bottom_message) - 1);
-                bottom_message[sizeof(bottom_message) - 1] = '\0';
-                input_mode = 0; // Kembalikan ke 0 sejenak karena ini mode konfirmasi getch
-                renderScreen(NULL, total_lines);
-                if (_getch() != 'y') {
+        if (strlen(temp_name) > 0) 
+        {
+            if (isFileExists(temp_name)) 
+            {
+                input_mode = 0; // Ubah ke mode konfirmasi getch sejenak
+                if (!askConfirmation("[WARNING] File sudah ada! Timpa? (y/n): ")) 
+                {
                     strncpy(bottom_message, "[BATAL] Penyimpanan dibatalkan.", sizeof(bottom_message) - 1);
                     bottom_message[sizeof(bottom_message) - 1] = '\0';
+                    show_message = 1;
+                    input_mode = 0; // FIX: Reset input_mode agar kursor atas tidak terkunci mati
                     return;
                 }
             }
@@ -166,54 +163,53 @@ void handleSaveAsAction() {
     input_mode = 0;
     show_message = 0;
 }
-
-// Fungsi Save: Update file aktif atau lempar ke Save As jika Untitled
 void handleSaveAction() 
 {
-    if (strcmp(current_filename, "Untitled") == 0 || strlen(current_filename) == 0) {
+    if (strcmp(current_filename, "Untitled") == 0 || strlen(current_filename) == 0) 
+	{
         handleSaveAsAction();
-    } else {
+    } 
+	else 
+	{
         saveToFile(current_filename);
     }
 }
 
-//Menangani penutupan program
 void handleExitAction() 
 {
+    int confirm = 0;
+
     if (is_in_editor == 1) 
 	{ 
         if (is_modified == 1) 
 		{
-            strcpy(bottom_message, "[WARNING] Perubahan belum disimpan! Tetap keluar? (y/n): ");
+        	
+            confirm = askConfirmation("[WARNING] Perubahan belum disimpan! Tetap keluar? (y/n): ");
         } 
 		else 
 		{
-            strcpy(bottom_message, "[QUIT] Keluar dari Saw<git>? (y/n): ");
+            confirm = askConfirmation("[QUIT] Keluar dari Saw<git>? (y/n): ");
         }
-        show_message = 1;
-        renderScreen(NULL, total_lines);
     } 
 	else 
 	{
-		printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
+        printf("\n[QUIT] Keluar dari Saw<git>? (y/n): ");
+        int c = _getch();
+        if (c == 'y' || c == 'Y') confirm = 1;
     }
 
-    int confirm = _getch();
-    if (confirm == 'y' || confirm == 'Y') 
+    if (confirm) 
 	{
         clearRecovery();
-        printf("\033[H\033[J"); // Hapus layar total dengan ANSI sebelum keluar bersih
+        printf("\033[H\033[J"); 
         exit(0); 
     }
-    
-    show_message = 0;
-    strcpy(bottom_message, "");
+    clearBottomMessage();
 }
 
 void handleEditInput(char *filename) 
 {
-	is_in_editor = 1; 
-	
+    is_in_editor = 1; 
     if (total_lines == 0) total_lines = 1; 
     strncpy(current_filename, filename, sizeof(current_filename) - 1);
     current_filename[sizeof(current_filename) - 1] = '\0';
@@ -223,78 +219,78 @@ void handleEditInput(char *filename)
         renderScreen(NULL, total_lines);
         int c = _getch();
         
-        if (c == 27) // ESC (Kembali ke menu utama)
+        if (c == 27) 
+		{ // ESC
+            is_in_editor = 0;
+            break; 	
+        }
+        else if (c == 15) 
 		{
-        	is_in_editor = 0;
-        	break; 	
-		}
-        else if (c == 15) // Ctrl+O (Buka file)
-		{ 
-			handleOpenAction();
-        }
-        else if (c == 14) // Ctrl+N (Buat file baru)
-		{ 
-        	handleNewFileAction();
-        }
-        else if (c == 17)  // Ctrl+Q (keluar)
+			handleOpenAction(); 
+		}   // Ctrl+O
+        else if (c == 14) 
 		{
-			handleExitAction(); 
-   		}
-        else if (c == 224) // Kode awal untuk tombol fungsi (Panah, Delete, dll)
-		{ 
-            c = _getch();
-            if (c == 72) 
-			{
-				move_up();	
-			}
-            else if (c == 80) 
-			{
-                move_down();
-			}
-            else if (c == 75) 
-			{
-            	move_left();	
-			}
-            else if (c == 77) 
-			{
-				move_right();	
-			}
-            else if (c == 83)  // Delete key
-			{
-				delete_forward();
-				markAsModified();
-			}
-        }
-        else if (c == 7) // Ctrl+G (Help : Informasi Shortcut)
-		{ 
-            renderHelpScreen();
-            _getch();
-        }
-        else if (c == 9) // Ctrl+I (Info) 
-		{ 
-            renderInfoScreen();
-            _getch();
-        }
-        else if (c == 19) // Ctrl + S
-		{ 
-		    handleSaveAction(); 
-		}
-		else if (c == 1) // Ctrl + A (Save As)
+			handleNewFileAction(); // Ctrl+N
+		}	
+        else if (c == 17) 
 		{
-		    handleSaveAsAction(); 
-		}     
-        else if (c == 8)  // Backspace
-		{ 
+			handleExitAction();    // Ctrl+Q
+		}	
+        else if (c == 19) 
+		{
+			handleSaveAction(); // Ctrl+S
+		}    
+        else if (c == 1)  
+		{
+			handleSaveAsAction();  // Ctrl+A
+		}	
+        else if (c == 8) 
+		{                       // Backspace
             delete_char();
             markAsModified();
         }
-        else if (c == 13) //Enter
-		{ 
+        else if (c == 13) 
+		{                      // Enter
             insert_newline(); 
             markAsModified(); 
         } 
-        else if (c >= 32 && c <= 126) //Pengetikan karakter standar (huruf, angka, simbol)
-		{ 
+        else if (c == 224) 
+		{                     // Tombol Fungsi (Panah/Delete)
+            c = _getch();
+            if (c == 72) 
+			{
+				move_up();
+			}
+            else if (c == 80) 
+			{
+				move_down();
+			}
+            else if (c == 75) 
+			{
+				move_left();
+			}
+            else if (c == 77)
+			{
+				move_right();
+			}
+            else if (c == 83) 
+			{
+                delete_forward();
+                markAsModified();
+            }
+        }
+        else if (c == 7) 
+		{                       // Ctrl+G
+            renderHelpScreen();
+            _getch();
+        }
+        else if (c == 9) 
+		{                       // Ctrl+I
+            renderInfoScreen();
+            _getch();
+        }
+        else if (c >= 32 && c <= 126) 
+		{          // Karakter Standar
             insert_char((char)c); 
             markAsModified(); 
         }
@@ -304,7 +300,6 @@ void handleEditInput(char *filename)
 void handleMenuInput() 
 {
     int c = _getch(); 
-
     if (c == '1' || c == 15) 
 	{
 		handleOpenAction();
