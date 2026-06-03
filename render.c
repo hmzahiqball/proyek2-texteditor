@@ -69,8 +69,8 @@ void renderHelpScreen()
     printf(" Ctrl + N : Untuk membuka file baru               \n");
     printf(" Ctrl + I : Untuk membuka informasi aplikasi      \n");
     printf(" Ctrl + G : Untuk membuka informasi shortcut      \n");
-    printf(" Ctrl + S : Untuk menyimpan perubahan file         \n");
-    printf("            Save (Pada Menu Open) / Save As (Pada menu Create)\n");
+    printf(" Ctrl + S : Untuk menyimpan perubahan file        \n");
+    printf(" Ctrl + A : Untuk menyimpan file, sebagai file baru\n");
     printf(" Ctrl + Q : Keluar dari Program                   \n");
     printf(" ESC      : Kembali ke Menu Utama                 \n");
     printf(" Panah    : Navigasi Kursor                       \n");
@@ -81,8 +81,11 @@ void renderHelpScreen()
 // Fungsi utama untuk menggambar ulang seluruh tampilan editor ke layar terminal
 void renderScreen(void *unused_buffer, int unused_rows) 
 {
-    // ANTI-FLICKER: Hanya kembali ke pojok kiri atas (0,0) tanpa menghapus layar hitam
-    printf("\033[H"); 
+    // 1. SEMBUNYIKAN KURSOR SEBELUM RENDER DIMULAI (Melenyapkan Flicker Total!)
+    printf("\033[?25l"); 
+    
+    // ANTI-FLICKER LAYAR: Kembali ke pojok kiri atas (0,0)
+    printf("\033[H");
 
     // TRAVERSE DLL: Cari node awal berdasarkan scroll vertikal saat ini
     LineNode *current = head;
@@ -151,22 +154,20 @@ void renderScreen(void *unused_buffer, int unused_rows)
     // 4. PENEMPATAN KURSOR TERMINAL SECARA DINAMIS (Kunci Koordinat Absolut Windows API)
     if (input_mode) 
     {
-        // Posisi baris input nama file: Viewport (20) + Status Bar (4) + Jarak Newline (2)
-        int msg_line = SCREEN_HEIGHT + 6; 
-        
+        int msg_line = SCREEN_HEIGHT + 6;
         char *last_line = strrchr(bottom_message, '\n');
         int col = last_line ? strlen(last_line + 1) + 1 : strlen(bottom_message) + 1;
-        
         setCursorPosition(msg_line, col);
     } 
     else 
     {
-        // Posisi kursor mode ketik dihitung relatif terhadap offset jendela saat ini (row_offset dan col_offset)
         int visual_row = cursor_row - view_row_offset + 1;
         int visual_col = cursor_col - view_col_offset + 1;
-        
         setCursorPosition(visual_row, visual_col);
     }
 
-    fflush(stdout); // Semburkan data ke layar terminal secara serentak
+    // 2. HIDUPKAN KEMBALI KURSOR SETELAH POSISINYA SUDAH BENAR-BENAR STABIL
+    printf("\033[?25h"); 
+
+    fflush(stdout);
 }
