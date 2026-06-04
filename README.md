@@ -4,106 +4,84 @@ Terminal Text Editor adalah aplikasi penyunting teks sederhana berbasis terminal
 
 Program ini terinspirasi dari aplikasi **Notepad** pada sistem operasi Windows yang berfungsi untuk membuat, membuka, mengedit, dan menyimpan file teks tanpa format (plain text).
 
-Implementasi program menggunakan **bahasa C** dengan representasi data menggunakan **struktur array 2 dimensi**.
+Implementasi program menggunakan **bahasa C** dengan representasi data memori dinamis menggunakan **struktur Doubly Linked List**.
 
 ---
 
-# Overview
+## Overview
 
-Text editor ini dirancang untuk memungkinkan pengguna melakukan manipulasi file teks langsung dari terminal Windows.
+Text editor ini dirancang untuk memungkinkan pengguna melakukan manipulasi file teks langsung dari terminal Windows secara efisien dan aman.
 
 Struktur data utama yang digunakan adalah **Doubly Linked List**:
+- Setiap baris teks disimpan sebagai **node** (`LineNode`).
+- Setiap node terhubung dengan pointer ke baris sebelumnya (`prev`) dan sesudahnya (`next`).
+- Akses dan manipulasi baris dilakukan secara dinamis (menggunakan dialokasi memori `malloc` & `realloc`).
+- Mencegah masalah batas tetap (fixed-size limit) yang sering ditemui pada array statis.
 
-- Setiap baris teks disimpan sebagai **node** (`LineNode`)
-- Setiap node punya pointer ke node sebelumnya (`prev`) dan sesudahnya (`next`)
-- Akses baris dilakukan lewat fungsi `getLine(row)`
+Posisi kursor dan viewport dikontrol secara presisi menggunakan kordinat baris dan kolom, didukung oleh integrasi **Windows API** (`SetConsoleCursorPosition`) untuk navigasi visual tanpa flicker.
 
-Posisi kursor dikontrol menggunakan:
-
-```c
-cursor_row
-cursor_col
-```
 ---
 
-# Fitur
+## Fitur Utama
 
-Fitur utama yang diimplementasikan dalam program ini:
+- **Create File** – Membuat file teks baru dari buffer kosong.
+- **Open File** – Membuka file teks yang sudah ada ke dalam memori (RAM).
+- **Update File** – Mengedit teks dengan kapabilitas insert karakter, backspace, delete, dan enter (memecah baris).
+- **Save File (Ctrl+S)** – Menyimpan isi buffer kembali ke file disk.
+- **Save As (Ctrl+A)** – Menyimpan isi teks dengan nama file baru.
+- **Auto Recovery** – Autosave secara cerdas setiap **2 detik** ke `recovery.tmp`. Mendukung restorasi data jika terjadi crash atau program dihentikan paksa (interupsi OS).
+- **Dynamic Viewport Scrolling** – Mendukung pengguliran layar (scrolling) vertikal maupun horizontal (kiri-kanan) secara adaptif.
+- **Flicker-Free Rendering** – Menghilangkan kedipan (flicker) terminal pada saat layar di-render ulang dengan kontrol visibility kursor berbasis ANSI (`\033[?25l` & `\033[?25h`).
 
-- **Create File** – Membuat file teks baru
-- **Open File** – Membuka file teks yang sudah ada
-- **Update File** – Mengedit isi teks dalam editor
-- **Save File** – Menyimpan isi buffer ke file (Ctrl+S)
-- **Save As** – Menyimpan ke nama file baru jika belum pernah disimpan
-- **Auto Recovery** – Menyimpan perubahan ke file sementara `recovery.tmp` secara otomatis setiap **2  detik**. Data dipulihkan otomatis saat program dibuka kembali setelah crash.
- 
 ---
 
-# Setup Environment
+## Setup Environment
 
 Agar program dapat dijalankan, pastikan environment berikut tersedia:
-
 - Sistem operasi **Windows**
 - **Command Prompt / PowerShell**
 - **GCC Compiler** untuk bahasa C (via MinGW)
 - **Git** untuk clone repository
 
 Clone repository project:
-
 ```bash
-git clone https://github.com/hmzahiqball/proyek2-texteditor.git
-```
-
-Masuk ke folder project:
-
-```bash
+git clone [https://github.com/hmzahiqball/proyek2-texteditor.git](https://github.com/hmzahiqball/proyek2-texteditor.git)
 cd proyek2-texteditor
+
 ```
 
 ---
 
-# Instalasi
+## Instalasi & Kompilasi
 
-Jika GCC belum tersedia, install **MinGW** terlebih dahulu:
+Jika GCC belum tersedia, install **MinGW** terlebih dahulu dari [mingw-w64.org](https://www.mingw-w64.org), lalu tambahkan path GCC ke Environment Variables.
 
-1. Download MinGW dari https://www.mingw-w64.org
-2. Install dan tambahkan path GCC ke Environment Variables Windows
-3. Verifikasi instalasi:
-
-```bash
-gcc --version
-```
-
----
-
-# Cara Pakai
-
-## 1. Compile Program
-
-Pastikan semua file `.c` ada di satu folder, lalu compile menggunakan Command Prompt:
+**Cara Compile Program:**
+Pastikan semua file `.c` ada di satu direktori, lalu kompilasi menggunakan Command Prompt:
 
 ```bash
 gcc main.c recovery.c file_io.c buffer.c render.c input.c cursor.c -o app
+
 ```
 
-## 2. Jalankan Program
+**Cara Menjalankan:**
 
 ```bash
 ./app
+
 ```
 
 ---
 
-## Contoh Penggunaan
+## Panduan Penggunaan
 
 ### 1. Menu Utama
 
-Saat program dibuka, akan tampil menu utama:
+Saat program dibuka, layar menu utama akan muncul:
 
-```
+```text
 ==================================================
 =========== Saw<git> | Text Editor ===============
-
 1. Open file
 2. Create File
 3. Info
@@ -111,264 +89,142 @@ Saat program dibuka, akan tampil menu utama:
 5. Quit
 ==================================================
 Sawgit>
-```
-
-Pilih menu dengan menekan angka **1-5** di keyboard.
-
-Jika ada data recovery dari sesi sebelumnya: 
 
 ```
+
+Jika terdapat recovery data dari sesi yang crash sebelumnya, sistem akan mendeteksinya:
+
+```text
 [!] Recovery ditemukan, 5 baris dimuat.
 Tekan sembarang tombol untuk lanjut...
+
 ```
 
-Program langsung masuk ke editor dengan data sesi sebelumnya.
+### 2. Mode Editor — Shortcut Keyboard
+
+Di dalam mode editor, berbagai aksi dapat dilakukan tanpa harus kembali ke menu utama:
+
+| Shortcut | Aksi |
+| --- | --- |
+| **Ctrl + S** | Simpan file (Save jika sudah bernama, Save As jika *Untitled*) |
+| **Ctrl + A** | Save As (Simpan file sebagai nama baru) |
+| **Ctrl + O** | Buka file lain dari disk |
+| **Ctrl + N** | Buat file baru (Clear buffer) |
+| **Ctrl + I** | Tampilkan informasi aplikasi |
+| **Ctrl + G** | Tampilkan bantuan / panduan shortcut |
+| **Ctrl + Q** | Keluar dari program (dengan proteksi data belum tersimpan) |
+| **ESC** | Kembali ke Menu Utama |
+| **Panah** | Navigasi kursor (Atas, Bawah, Kiri, Kanan) |
+
+### 3. Status Bar
+
+Di bagian bawah antarmuka editor, terdapat status bar yang memonitor kondisi file secara real-time:
+
+```text
+========================================================================
+ [UNSAVED CHANGES] | Berkas: catatan.txt | Total: 5 baris
+========================================================================
+ Posisi: Baris 3, Kolom 7 | Ctrl+S: Simpan | Ctrl+A: Save As | ESC: Menu
+
+```
+
+* `[UNSAVED CHANGES]`: Buffer memiliki modifikasi yang belum di-write ke file permanen.
+* `[SAVED]`: Seluruh data termutakhir sudah aman di disk.
 
 ---
 
-### 2. Open File (Angka 1)
+## Arsitektur Teks & Manajemen Buffer
 
-Membuka file teks yang sudah ada di disk:
+Program menggunakan **Doubly Linked List** sebagai pondasi utama (bukan array statis) untuk menjaga fleksibilitas dan penggunaan memori yang dinamis.
 
-```
-[OPEN] Masukkan nama file: catatan.txt
-[INFO] catatan.txt berhasil dibuka. 3 baris dimuat.
-```
+### 1. Struktur Data `LineNode`
 
-Setelah file terbuka, program langsung masuk ke mode editor.
-
----
-
-### 3. Create File (Angka 2)
-
-Membuat file baru dengan buffer kosong, langsung masuk mode editor.
-
----
-
-### 4. Mode Editor — Shortcut Keyboard
-
-Setelah masuk mode editor, gunakan shortcut berikut:
-
-```
-Ctrl+S  → Simpan file (Save jika sudah punya nama, Save As jika baru)
-Ctrl+O  → Buka file lain dari dalam editor
-Ctrl+N  → Buat file baru dari dalam editor
-Ctrl+Q  → Keluar dari program
-Ctrl+I  → Info aplikasi
-Ctrl+G  → Bantuan shortcut
-ESC     → Kembali ke menu utama
-Panah   → Navigasi kursor
-```
-
----
-
-### 5. Simpan File (Ctrl+S)
-
-**Jika file sudah punya nama (dari Open):**
-
-```
-[INFO] Perubahan berhasil disimpan ke file catatan.txt
-Tekan sembarang tombol...
-```
-
-**Jika file baru (dari Create):**
-
-```
-[SAVE AS] Masukkan nama file baru: output.txt
-[INFO] Perubahan berhasil disimpan ke file output.txt
-Tekan sembarang tombol...
-```
-
----
-
-### 6. Status Bar
-
-Di bagian bawah editor selalu tampil status terkini:
-
-```
-[Unsaved Changes] | File: catatan.txt | Baris: 5
-Posisi: Baris 3, Kolom 7 | Ctrl+S: Save | ESC: Menu
-```
-
-- `[Unsaved Changes]` → ada perubahan yang belum disimpan
-- `[Saved]` → semua perubahan sudah tersimpan ke file
-
----
-
-### 7. Autosave & Recovery
-
-- Setiap keystroke trigger  `writeRecovery()`, tapi file hanya ditulis ke disk **setiap 2 detik** — efisien dan tidak membebani disk
-- File ditulis ke `recovery_new.tmp` dulu, baru di-rename ke `recovery.tmp` — **Safe Write** untuk mencegah corrupt
-- Jika program crash atau di-kill mendadak, signal handler otomatis memanggil `writeRecovery()` sebelum program mati
-- Saat program dibuka kembali, data dipulihkan otomatis termasuk nama file yang sedang dibuka
-
-Contoh saat crash:
-
-```
-[!] Program diinterupsi. Menyimpan recovery...
-[!] Recovery tersimpan. Program keluar.
-```
-
----
-
-### 8. Arsitektur Buffer & Logika Manipulasi Teks
-
-Bagian ini menjelaskan bagaimana data teks dikelola di dalam memori menggunakan struktur array 2 dimensi dan bagaimana manipulasi karakter dilakukan secara efisien melalui operasi memori langsung.
-
-#### 1. Struktur Data Utama
-Program menggunakan representasi **Array 2D Statis** sebagai basis penyimpanan teks:
-* **`text_buffer[MAX_ROW][MAX_COL]`**: Array global yang berfungsi sebagai buffer teks utama untuk menyimpan setiap karakter.
-* **`line_length[MAX_ROW]`**: Array pendukung yang melacak jumlah karakter secara presisi pada setiap baris.
-* **`total_lines`**: Variabel global yang mencatat jumlah baris yang saat ini terisi di dalam buffer.
-
-### 8. Arsitektur Buffer & Logika Manipulasi Teks
-
-Program menggunakan **Doubly Linked List** sebagai struktur data utama untuk menyimpan teks.
-
-#### 1. Struktur Data Utama
-
-Setiap baris teks disimpan sebagai node `LineNode`:
+Setiap baris teks disimpan dalam bentuk struct dinamis:
 
 ```c
 typedef struct LineNode {
-    char *line;      // isi teks (dynamic string)
-    int length;      // panjang teks
-    int capacity;    // kapasitas memori yang dialokasikan
+    char *line;      // Isi teks (string dinamis)
+    int length;      // Panjang teks saat ini
+    int capacity;    // Kapasitas memori teralokasi (auto-resize)
     struct LineNode *prev;
     struct LineNode *next;
 } LineNode;
-```
-
-- `head` → node pertama (baris pertama)
-- `tail` → node terakhir (baris terakhir)
-- `total_lines` → jumlah baris aktif
-
-#### 2. Mekanisme Edit Teks
-
-- **Insert karakter** — `memmove` geser karakter di kanan kursor ke kanan
-- **Backspace** — kalau di tengah baris, geser kiri. Kalau di awal baris, merge dengan baris sebelumnya
-- **Enter** — potong baris di posisi kursor, buat node baru untuk sisa teks
-
-#### 3. Error Handling & Validasi
-Untuk meningkatkan keamanan dan stabilitas, program dilengkapi dengan mekanisme error handling yang mencakup:
-* **Validasi Input**: Fungsi seperti `appendLine` memeriksa apakah string input tidak NULL sebelum diproses.
-* **Bounds Checking**: Semua operasi manipulasi karakter (insert, delete, newline) memvalidasi posisi kursor (`cursor_row`, `cursor_col`) agar tetap dalam batas array [0, MAX_ROW) dan [0, MAX_COL].
-* **Pesan Error**: Jika terjadi kesalahan (misalnya, posisi kursor di luar batas), program menampilkan pesan error dalam bahasa Indonesia dan menghentikan operasi tanpa crash, memungkinkan pengguna untuk melanjutkan editing.
-
----
-
-### 9. Sistem Kontrol Kursor & Viewport
-
-Modul kursor mengelola navigasi pengguna dan memastikan tampilan terminal tetap sinkron dengan posisi input di dalam buffer.
-
-#### 1. Boundary Protection (Limit Kursor)
-Fungsi `limitCursorBounds` bertugas menjaga agar kursor tetap berada dalam area yang valid:
-* Kursor tidak diizinkan bergerak melampaui indeks baris yang tersedia (`total_lines`).
-* Kursor dibatasi secara horizontal oleh panjang teks pada baris yang bersangkutan (`line_length`).
-
-#### 2. Navigasi dan Viewport Scrolling
-* **Smart Navigation**: Saat berpindah baris (atas/bawah), jika baris tujuan memiliki panjang yang lebih pendek dari posisi kolom kursor saat ini, kursor secara otomatis akan berpindah ke akhir baris tersebut.
-#### 3. Error Handling & Validasi
-Untuk mencegah navigasi yang tidak valid, modul kursor dilengkapi dengan error handling:
-* **Validasi Posisi Kursor**: Setiap fungsi gerakan (move_left, move_right, dll.) memeriksa apakah `cursor_row` dan `cursor_col` dalam batas aman sebelum melakukan perubahan.
-* **Boundary Protection**: Fungsi `limitCursorBounds` dan `adjust_viewport` memvalidasi `total_lines` dan posisi kursor untuk menghindari akses array di luar batas.
-* **Pesan Error**: Jika posisi kursor invalid, program menampilkan pesan error dalam bahasa Indonesia dan menghentikan gerakan, menjaga stabilitas editor.
-
----
-
-### 10. Spesifikasi Teknis Buffer
-
-| Komponen | Deskripsi | Keterangan |
-| :--- | :--- | :--- |
-| **Struktur Data** | Doubly Linked List | Dinamis, tidak ada batas tetap |
-| **Kapasitas Baris** | Jumlah total baris | Dinamis sesuai memori |
-| **Kapasitas Kolom** | Karakter per baris | Dinamis, auto-resize |
-| **Tipe Data** | Format penyimpanan | `char*` (dynamic string) |
-| **Scrolling** | Mekanisme tampilan | Vertikal (Row-offset) |
-| **Error Handling** | Mekanisme validasi | Bounds checking & pesan error |
-
----
-
-### 11. Keluar Program (Ctrl+Q)
-
-**Jika ada perubahan belum disimpan:**
 
 ```
-[WARNING] Perubahan belum disimpan! Tetap keluar? (y/n):
-```
 
-**Jika sudah tersimpan:**
+### 2. Manipulasi Memori Berbasis Kapasitas
 
-```
-[QUIT] Keluar dari Saw<git>? (y/n):
-```
+* **Kapasitas Adaptif**: Menggunakan fungsi `ensureCapacity()` yang secara matematis melipatgandakan ukuran alokasi (`realloc`) saat string mendekati batas kapasitasnya, mengoptimalkan rasio kecepatan & konsumsi RAM.
+* **Operasi String**:
+* Insert karakter mengandalkan `memmove` untuk pergeseran array di dalam buffer baris secara aman.
+* Saat menekan Enter di tengah baris, baris dipotong dan sisa teks dipindahkan ke Node baru yang langsung disambung di antara `prev` dan `next` yang relevan.
 
-Tekan `y` untuk konfirmasi. `recovery.tmp` otomatis dihapus saat keluar normal.
 
----
-
-## Daftar Shortcut & Pemrosesan Input (ASCII)
-
-Aplikasi ini menggunakan pustaka conio.h dengan fungsi \_getch() untuk menangkap input secara real-time tanpa menekan Enter. Berikut adalah pemetaan kode ASCII yang digunakan:
-
-- Ctrl + N = 14 (Membuat dokumen baru kosong,handleNewFileAction)
-- Ctrl + O = 15 (Membuka file dari direktori,handleOpenAction)
-- Ctrl + Q = 17 (Keluar dari aplikasi (dengan proteksi),handleExitAction)
-- Ctrl + S = 19 (Menyimpan perubahan (Save / Save As),handleSaveAction)
-- Ctrl + I = 9 (Menampilkan informasi aplikasi,renderInfoScreen)
-- Ctrl + G = 7 (Menampilkan panduan shortcut,renderHelpScreen)
-- ESC = 27 (Kembali ke Menu Utama,is_in_editor = 0)
-- Enter = 13 (Membuat baris baru atau memecah baris, insert_newline)
-- Backspace = 8 (Menghapus karakter di belakang kursor, delete_char)
-
-## Pengaman Data
-
-Program menjamin keamanan data dengan memberikan peringatan [WARNING] pada aksi-aksi destruktif berikut jika variabel is_modified == 1:
-
-- Membuka file lain saat sedang mengedit (Ctrl+O).
-- Membuat file baru saat buffer masih berisi perubahan (Ctrl+N).
-- Keluar dari aplikasi saat data belum tersimpan (Ctrl+Q).
-
-## Cara Kerja Recovery
-
-Program ini dilengkapi fitur **Auto Recovery** untuk mencegah kehilangan data.
-
-### Alur Recovery:
-
-1. Setiap kali user mengetik, data otomatis disimpan ke `recovery.tmp`
-2. Jika program crash atau di-kill mendadak (SIGTERM), signal handler otomatis memanggil `writeRecovery()` sebelum program mati — data tetap aman
-3. Saat program dibuka kembali, data dipulihkan otomatis dari `recovery.tmp`
-4. Jika user berhasil Ctrl+S, `recovery.tmp` otomatis dihapus karena data sudah aman di file `.txt` permanen
-5. Jika user keluar normal (Ctrl+Q + konfirmasi `y`), `recovery.tmp` dihapus otomatis
-
-### File Recovery:
-
-| File           | Fungsi                        |
-| -------------- | ----------------------------- |
-| `recovery.tmp` | File sementara untuk autosave |
-| `recovery.c`   | Modul yang mengelola recovery |
-| `recovery.h`   | Header file modul recovery    |
-
-#### Fungsi Recovery:
-
-| Fungsi | Keterangan |
-| --- | --- |
-| `checkRecovery()` | Cek dan muat data recovery saat startup. Return `1` jika ditemukan, `0` jika tidak ada |
-| `writeRecovery()` | Simpan isi buffer ke `recovery.tmp` — dipanggil setiap keystroke tapi hanya tulis ke disk **setiap 2 detik** menggunakan `time()` dan `difftime()` |
-| `clearRecovery()` | Hapus `recovery.tmp` saat keluar normal atau setelah save berhasil |                                                                    |
 
 ---
 
-# Identitas Tim
+## Sistem Navigasi Kursor & Viewport
 
-| NIM       | Nama                 | ID Github   | Manager   |
-| --------- | -------------------- | ----------- | --------- |
-| 251511056 | Putra Suyapratama    | hmzahiqball | Pak Rizki |
-| 251511057 | R. Neysa Rahma Velda | Neysavelda  | Pak Rizki |
-| 251511061 | Tania Dwi Pangesti   | taniadwip   | Pak Rizki |
+Modul kursor (File `cursor.c`) bertugas menerjemahkan logika buffer menjadi posisi visual (tampilan).
+
+### 1. Viewport Dinamis (Vertikal & Horizontal)
+
+Untuk menunjang pengeditan baris panjang maupun dokumen bervolume tinggi, render menggunakan variabel offset:
+
+* `view_row_offset`: Menggeser jendela tampilan ke bawah/atas (Vertical Scrolling).
+* `view_col_offset`: Menggeser jendela tampilan ke kanan/kiri (Horizontal Scrolling).
+
+### 2. Boundary Limit & Auto-Adjust
+
+Setiap gerakan panah diproteksi oleh fungsi `limitCursorBounds()`. Jika bergerak dari baris panjang ke baris yang lebih pendek, kursor tidak akan *out-of-bounds*, melainkan otomatis bergeser ke batas maksimum (ujung karakter) baris tujuan. Layar juga otomatis melakukan `adjust_viewport` mengikuti kordinat.
 
 ---
 
-# Repository
+## Keamanan Data (Auto Recovery)
 
-Github Team: https://github.com/hmzahiqball/proyek2-texteditor
+Sistem ini didesain tangguh menghadapi Force Close (Crash) dengan intervensi *Signal Handling* (`SIGINT` & `SIGTERM`) pada `main.c`.
+
+### Alur Auto-Recovery:
+
+1. **Perekaman:** Setiap modifikasi yang dilakukan (`is_modified = 1`) akan mentrigger evaluasi autosave. File akan ditulis ulang ke `recovery_new.tmp` hanya setiap **2 detik sekali** (menggunakan fungsi `time()` & `difftime()`), mencegah *bottleneck* I/O pada disk keras.
+2. **Safe Write:** Program merename file dari `.tmp` sementara menjadi `recovery.tmp` murni menggunakan `rename()`. Hal ini mencegah file terkorupsi jika aplikasi terhenti tepat pada mili-detik proses penulisan file.
+3. **Signal Handler Catch:** Jika user tidak sengaja menutup CMD atau mengirim sinyal Kill, aplikasi akan memanggil `writeRecovery()` secara paksa sebelum shutdown.
+4. **Restorasi Otomatis:** Saat program kembali dijalankan dan menemui fail *recovery.tmp*, pengguna secara otomatis akan dikembalikan pada file (*current_filename*) serta baris teks terakhir tanpa adanya data yang hilang.
+
+---
+
+## Daftar Pemrosesan Input (Kode ASCII via Conio.h)
+
+Input ditangani secara *real-time* via `_getch()` (Tanpa menunggu tuts enter).
+
+* `14` = Ctrl + N (Buat Baru)
+* `15` = Ctrl + O (Buka File)
+* `17` = Ctrl + Q (Keluar)
+* `19` = Ctrl + S (Simpan)
+* `1`  = Ctrl + A (Save As)
+* `9`  = Ctrl + I (Info)
+* `7`  = Ctrl + G (Bantuan)
+* `27` = ESC (Menu Utama)
+* `13` = Enter (Membuat Baris Baru / Split Baris)
+* `8`  = Backspace (Hapus Karakter Sebelumnya)
+* `224, 72` = Panah Atas
+* `224, 80` = Panah Bawah
+* `224, 75` = Panah Kiri
+* `224, 77` = Panah Kanan
+* `224, 83` = Delete (Hapus Karakter di Depan)
+
+---
+
+## Identitas Tim Pengembang
+
+| NIM | Nama | ID Github | Manager |
+| --- | --- | --- | --- |
+| 251511056 | Putra Suyapratama | hmzahiqball | Pak Rizki |
+| 251511057 | R. Neysa Rahma Velda | Neysavelda | Pak Rizki |
+| 251511061 | Tania Dwi Pangesti | taniadwip | Pak Rizki |
+
+**Repository GitHub Team:** [proyek2-texteditor](https://github.com/hmzahiqball/proyek2-texteditor)
+
+```
+
+```
