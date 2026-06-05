@@ -19,7 +19,7 @@ void clearBottomMessage()
     renderScreen(NULL, total_lines);
 }
 
-// Helper: Menandai adanya perubahan dokumen (Autosave triggered)
+// Helper: Menandai adanya perubahan dokumen
 void markAsModified() 
 {
     is_modified = 1;
@@ -28,7 +28,7 @@ void markAsModified()
     writeRecovery(); 
 }
 
-// Helper: Konfirmasi pengamanan data y/n 
+// Helper: Konfirmasi pengamanan data
 int askConfirmation(const char *warning_text) 
 {
     strcpy(bottom_message, warning_text);
@@ -38,18 +38,16 @@ int askConfirmation(const char *warning_text)
     int konfirmasi = _getch();
     if (konfirmasi == 'y' || konfirmasi == 'Y') 
 	{
-        return 1; // User setuju (Yes)
+        return 1; 
     }
     clearBottomMessage();
-    return 0; // User batal (No)
+    return 0; 
 }
 
-// Menangani aksi membuka file
 void handleOpenAction() 
 {
     if (is_in_editor == 1) 
 	{
-        // Jika ada perubahan, minta konfirmasi bypass data
         if (is_modified == 1) 
 		{
             if (!askConfirmation("[WARNING] Perubahan belum disimpan! Buka file lain? (y/n): ")) 
@@ -290,7 +288,7 @@ void handleEditInput(char *filename)
             _getch();
         }
         else if (c >= 32 && c <= 126) 
-		{          // Karakter Standar
+		{          			// Karakter Standar
             insert_char((char)c); 
             markAsModified(); 
         }

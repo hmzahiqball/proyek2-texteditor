@@ -11,24 +11,24 @@ extern char current_filename[256];
 extern int total_lines;
 
 int view_row_offset = 0;
-int view_col_offset = 0; // Mengendalikan pergeseran jendela visual ke kanan-kiri
+int view_col_offset = 0; 
 
 char bottom_message[256] = "";
 int show_message = 0;
 int input_mode = 0;
 
-// Helper function untuk set cursor position menggunakan Windows API
+
 void setCursorPosition(int row, int col) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD coord;
-    coord.X = col - 1;  // 0-based
-    coord.Y = row - 1;  // 0-based
+    coord.X = col - 1;  
+    coord.Y = row - 1;  
     SetConsoleCursorPosition(hConsole, coord);
 }
 
 void renderMainMenu() 
 {
-    printf("\033[H\033[J"); // Bersihkan layar menu tanpa flicker
+    printf("\033[H\033[J"); 
     printf("==================================================\n");
     printf("=========== Saw<git> | Text Editor ===============\n");
     printf("1. Open file\n");
@@ -78,16 +78,12 @@ void renderHelpScreen()
     printf("\nTekan sembarang tombol untuk kembali...");
 }
 
-// Fungsi utama untuk menggambar ulang seluruh tampilan editor ke layar terminal
 void renderScreen(void *unused_buffer, int unused_rows) 
 {
-    // 1. SEMBUNYIKAN KURSOR SEBELUM RENDER DIMULAI (Melenyapkan Flicker Total!)
     printf("\033[?25l"); 
     
-    // ANTI-FLICKER LAYAR: Kembali ke pojok kiri atas (0,0)
     printf("\033[H");
 
-    // TRAVERSE DLL: Cari node awal berdasarkan scroll vertikal saat ini
     LineNode *current = head;
     int i = 0;
     while (i < view_row_offset && current != NULL) 
@@ -96,21 +92,19 @@ void renderScreen(void *unused_buffer, int unused_rows)
         i = i + 1;
     }
 
-    // 1. CETAK TEKS VIEWPORT (ADOPRESI HORIZONTAL SCROLLING)
+    
     int printed_lines = 0;
     while (current != NULL && printed_lines < SCREEN_HEIGHT) 
     {
         int line_len = strlen(current->line);
         
-        // Jika panjang teks baris melebihi offset geser jendela saat ini
         if (line_len > view_col_offset) 
         {
-            // Cetak dimulai dari karakter ke-view_col_offset, potong sepanjang SCREEN_WIDTH (80)
             printf("%.*s\033[K\n", SCREEN_WIDTH, current->line + view_col_offset);
         } 
         else 
         {
-            // Jika baris kosong atau posisinya di luar offset, cetak baris kosong bersih
+            
             printf("\033[K\n");
         }
         
@@ -118,14 +112,12 @@ void renderScreen(void *unused_buffer, int unused_rows)
         printed_lines++;
     }
 
-    // Bersihkan sisa layar ke bawah jika isi file lebih pendek dari SCREEN_HEIGHT
     while (printed_lines < SCREEN_HEIGHT) 
     {
         printf("\033[K\n");
         printed_lines++;
     }
-
-    // 2. STATUS BAR (UX Polish Tania: Konsisten Tegak Lurus 80 Kolom)
+    
     printf("========================================================================\033[K\n");
     if (is_modified == 1) {
         printf(" [UNSAVED CHANGES] ");
@@ -135,11 +127,9 @@ void renderScreen(void *unused_buffer, int unused_rows)
     printf("| Berkas: %s | Total: %d baris\033[K\n", current_filename, total_lines);
     printf("========================================================================\033[K\n");
     
-    // Baris Posisi Kursor & Shortcut Navigasi
     printf(" Posisi: Baris %d, Kolom %d | Ctrl+S: Simpan | Ctrl+A: Save As | ESC: Menu\033[K\n", 
            cursor_row + 1, cursor_col + 1);
 
-    // 3. CETAK PROMPT AREA PESAN BAWAH
     if (show_message) 
     {
         printf("\n%s\033[K", bottom_message); 
@@ -151,7 +141,6 @@ void renderScreen(void *unused_buffer, int unused_rows)
 
     fflush(stdout);
 
-    // 4. PENEMPATAN KURSOR TERMINAL SECARA DINAMIS (Kunci Koordinat Absolut Windows API)
     if (input_mode) 
     {
         int msg_line = SCREEN_HEIGHT + 6;
@@ -166,7 +155,6 @@ void renderScreen(void *unused_buffer, int unused_rows)
         setCursorPosition(visual_row, visual_col);
     }
 
-    // 2. HIDUPKAN KEMBALI KURSOR SETELAH POSISINYA SUDAH BENAR-BENAR STABIL
     printf("\033[?25h"); 
 
     fflush(stdout);
